@@ -1,0 +1,7 @@
+# Lean build files
+.lake/
+*.olean
+*.ilean
+
+# Instructor-only files
+/LinearAlgebra/Instructor/
