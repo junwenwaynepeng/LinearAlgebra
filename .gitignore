@@ -3,5 +3,9 @@
 *.olean
 *.ilean
 
-# Instructor-only files
+# Instructor-only material
 /LinearAlgebra/Instructor/
+
+# Students should work here, but their files should not affect Git
+/MyWork/*
+!/MyWork/.gitkeep
