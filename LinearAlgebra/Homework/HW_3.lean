@@ -4,7 +4,7 @@ open Matrix
 open scoped BigOperators
 
 /-!
-# Homework 2 — Matrices and inverses
+# Homework 3 — Matrices and inverses
 
 This homework is based on the material from Class 1 and Class 2.
 In particular, you may use tactics and ideas such as

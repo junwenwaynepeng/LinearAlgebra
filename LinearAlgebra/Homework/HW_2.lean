@@ -2,9 +2,6 @@ import Mathlib
 
 /-!
 # Homework 2 — Solving Systems of Linear Equations
-
-You may use the tactics introduced in Class 1 and Class 2, including
-`rw`, `norm_num`, `constructor`, `linarith`, and the usual logical tactics.
 -/
 
 

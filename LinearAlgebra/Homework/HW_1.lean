@@ -2,6 +2,10 @@ import Mathlib
 
 open scoped BigOperators
 
+
+/-!
+# Homework 1
+-/
 /-!
 Exercise 1 — Composition of implications
 
