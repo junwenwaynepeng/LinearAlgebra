@@ -41,7 +41,7 @@ Then use the browser version of VS Code and install the **Lean 4** extension if 
 For the first time, **clone the repository instead of using Download ZIP**:
 
 ```bash
-git clone <REPOSITORY-URL>
+git clone https://github.com/junwenwaynepeng/LinearAlgebra.git
 cd LinearAlgebra
 lake exe cache get
 lake build
