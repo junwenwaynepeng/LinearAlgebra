@@ -201,21 +201,137 @@ example (x y z : ℝ)
 # Gaussian Elimiation
 -/
 
-
 def A : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![2, 1, 1, 5;
+  !![2,  1, 1,  5;
      4, -6, 0, -2;
-     -2, 7, 2, 9]
+    -2,  7, 2,  9]
 
 def B : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![
-    1, 0, 0, 1;
-    0, 1, 0, 1;
-    0, 0, 1, 2
-  ]
+  !![1, 0, 0, 1;
+     0, 1, 0, 1;
+     0, 0, 1, 2]
+
+
+-- R₂ ← R₂ - 2R₁
+def A₁ : Matrix (Fin 3) (Fin 4) ℝ :=
+  !![2,  1,  1,   5;
+     0, -8, -2, -12;
+    -2,  7,  2,   9]
+
+-- R₃ ← R₃ + R₁
+def A₂ : Matrix (Fin 3) (Fin 4) ℝ :=
+  !![2,  1,  1,   5;
+     0, -8, -2, -12;
+     0,  8,  3,  14]
+
+-- R₃ ← R₃ + R₂
+def A₃ : Matrix (Fin 3) (Fin 4) ℝ :=
+  !![2,  1,  1,   5;
+     0, -8, -2, -12;
+     0,  0,  1,   2]
+
+-- R₂ ← R₂ + 2R₃
+def A₄ : Matrix (Fin 3) (Fin 4) ℝ :=
+  !![2,  1, 1,  5;
+     0, -8, 0, -8;
+     0,  0, 1,  2]
+
+-- R₂ ← (-1/8)R₂
+def A₅ : Matrix (Fin 3) (Fin 4) ℝ :=
+  !![2, 1, 1, 5;
+     0, 1, 0, 1;
+     0, 0, 1, 2]
+
+-- R₁ ← R₁ - R₂
+def A₆ : Matrix (Fin 3) (Fin 4) ℝ :=
+  !![2, 0, 1, 4;
+     0, 1, 0, 1;
+     0, 0, 1, 2]
+
+-- R₁ ← R₁ - R₃
+def A₇ : Matrix (Fin 3) (Fin 4) ℝ :=
+  !![2, 0, 0, 2;
+     0, 1, 0, 1;
+     0, 0, 1, 2]
 
 #check Matrix.transvection
 #check Matrix.swap
 #check Matrix.scalar
 
-example : Matrix.RowEquivalent B:= by
+example : Matrix.RowEquivalent A B := by
+
+  -- R₂ ← R₂ - 2R₁
+  have h₁ : Matrix.RowEquivalent A A₁ := by
+    convert Matrix.rowEquivalent_transvection
+      A (1 : Fin 3) (0 : Fin 3) (by decide) (-2 : ℝ) using 1
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      norm_num [A, A₁]
+
+  -- R₃ ← R₃ + R₁
+  have h₂ : Matrix.RowEquivalent A₁ A₂ := by
+    convert Matrix.rowEquivalent_transvection
+      A₁ (2 : Fin 3) (0 : Fin 3) (by decide) (1 : ℝ) using 1
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      norm_num [A₁, A₂]
+
+  -- R₃ ← R₃ + R₂
+  have h₃ : Matrix.RowEquivalent A₂ A₃ := by
+    convert Matrix.rowEquivalent_transvection
+      A₂ (2 : Fin 3) (1 : Fin 3) (by decide) (1 : ℝ) using 1
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      norm_num [A₂, A₃]
+
+  -- R₂ ← R₂ + 2R₃
+  have h₄ : Matrix.RowEquivalent A₃ A₄ := by
+    convert Matrix.rowEquivalent_transvection
+      A₃ (1 : Fin 3) (2 : Fin 3) (by decide) (2 : ℝ) using 1
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      norm_num [A₃, A₄]
+
+  -- R₂ ← (-1/8)R₂
+  have h₅ : Matrix.RowEquivalent A₄ A₅ := by
+    let c : ℝˣ := Units.mk0 (-1 / 8 : ℝ) (by norm_num)
+    convert Matrix.rowEquivalent_rowScale
+      A₄ (1 : Fin 3) c using 1
+    rw [Matrix.rowScale_mul]
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      norm_num [A₄, A₅, Matrix.updateRow_apply, c]
+
+  -- R₁ ← R₁ - R₂
+  have h₆ : Matrix.RowEquivalent A₅ A₆ := by
+    convert Matrix.rowEquivalent_transvection
+      A₅ (0 : Fin 3) (1 : Fin 3) (by decide) (-1 : ℝ) using 1
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      norm_num [A₅, A₆]
+
+  -- R₁ ← R₁ - R₃
+  have h₇ : Matrix.RowEquivalent A₆ A₇ := by
+    convert Matrix.rowEquivalent_transvection
+      A₆ (0 : Fin 3) (2 : Fin 3) (by decide) (-1 : ℝ) using 1
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      norm_num [A₆, A₇]
+
+  -- R₁ ← (1/2)R₁
+  have h₈ : Matrix.RowEquivalent A₇ B := by
+    let c : ℝˣ := Units.mk0 (1 / 2 : ℝ) (by norm_num)
+    convert Matrix.rowEquivalent_rowScale
+      A₇ (0 : Fin 3) c using 1
+    rw [Matrix.rowScale_mul]
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      norm_num [A₇, B, Matrix.updateRow_apply, c]
+
+  exact h₁.trans <|
+    h₂.trans <|
+    h₃.trans <|
+    h₄.trans <|
+    h₅.trans <|
+    h₆.trans <|
+    h₇.trans h₈
