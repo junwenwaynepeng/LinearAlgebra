@@ -1,194 +1,142 @@
 import Mathlib
+open scoped BigOperators
 
-/-!
-# Class 2 — Solving Systems of Linear Equations in Lean
+example (x : ℝ) : x = x := by --proof x=x
+  rfl   -- rfl is a tactic that proves goals of the form a = a
 
-The main idea is simple:
+example (x y : ℝ) (h : y = x + 7) : 2 * y = 2 * (x + 7) := by
+  rw [h]
 
-* each equation is a hypothesis;
-* `rw` can be used for substitution;
-* `linarith` can perform linear elimination;
-* a system with no solution can be proved by deriving `False`;
-* row operations can be expressed as logical equivalences;
-* Lean can also prove uniqueness or describe a free variable.
--/
+example (P : Prop) : P → P := by --proof p implies p
+  intro w -- w is a variable that represents the proof of P
+  exact w -- exact is a tactic that proves the goal by using the proof w
 
-
-/-!
-## 1. Rearranging one linear equation
-
-`linarith` can rearrange a linear equation for us.
--/
-
-example (x y : ℝ)
-    (h : x + y = 7) :
-    y = 7 - x := by
-  linarith [h]
-
-
-/-!
-## 2. Solving a 2 × 2 system by substitution
-
-We first solve the first equation for `y`, substitute it into the second
-with `rw`, and then recover `y`.
--/
-
-example (x y : ℝ)
-    (h1 : 2 * x + y = 11)
-    (h2 : x - y = 1) :
-    x = 4 ∧ y = 3 := by
-  have hy : y = 11 - 2 * x := by
-    linarith [h1]
-
-  rw [hy] at h2
-
-  have hx : x = 4 := by
-    linarith [h2]
-
-  rw [hx] at hy
-  norm_num at hy
-
-  exact ⟨hx, hy⟩
-
-
-/-!
-## 3. Letting `linarith` do the elimination
-
-For a linear system over `ℝ`, `linarith` can often eliminate the variables
-directly.
--/
-
-example (x y : ℝ)
-    (h1 : 3 * x + 2 * y = 16)
-    (h2 : x - y = 2) :
-    x = 4 ∧ y = 2 := by
+example (P Q : Prop) (p : P) (q : Q) : P ∧ Q := by
   constructor
-  · linarith [h1, h2]
-  · linarith [h1, h2]
+  · exact p
+  · exact q
 
+example (P Q : Prop) (p : P) : P ∨ Q := by
+  · left
+    exact p
 
-/-!
-## 4. A system with three variables
+example (P Q : Prop) (h : P ∧ Q) : P := by
+  /-cases h with
+  | intro p q => exact p-/
+  /-obtain ⟨ p,q⟩ := h
+  exact p-/
+  rcases h with ⟨ p, q⟩
+  exact p
+
+example (P Q : Prop) (h : P ∨ Q) : Q ∨ P := by
+  /-cases h with
+  | inl p => --exact Or.inr p
+      right
+      exact p
+  | inr q => --exact Or.inl q
+      left
+      exact q-/
+  /-obtain p | q := h
+  · right
+    exact p
+  · left
+    exact q-/
+  rcases h with p | q
+  · right
+    exact p
+  · left
+    exact q
+
+-- Every proposition is either true or not true.
+example (P : Prop) : P ∨ ¬P := by
+  by_cases h : P
+  · left
+    exact h
+  · right
+    exact h
+
+/-
+Proof that if P implies Q, then not Q implies not P
+
+proof.
+Assume P implies Q, Q is false, and P is true.
+We want to show that these assumption are not coherent (False).
+A.  If we can get Q, then we have false
+    This is eactly the consequence of P implies Q when P is true.
+B.  Since P is true, so Q is true, we have false.
+C.  We have Q because P is true and P implies Q.
+    We then arrive contradiction because we have Q and not Q.
 -/
-
-example (x y z : ℝ)
-    (h1 : x + y + z = 6)
-    (h2 : 2 * x - y + z = 3)
-    (h3 : x + 2 * y - z = 2) :
-    x = 1 ∧ y = 2 ∧ z = 3 := by
-  constructor
-  · linarith [h1, h2, h3]
-  · constructor
-    · linarith [h1, h2, h3]
-    · linarith [h1, h2, h3]
+example (P Q : Prop) : ( P → Q) → (¬Q → ¬P) := by
+  unfold Not --We don't need to unfold Not, but it is good to know that it is defined as P → False
+  intro h1 h2 p -- assume P implies Q, Q implies false (not Q), and P
+  apply h2      -- Give the proof of Q to h2: Q → False, which will give us a proof of False
+  exact h1 p
+  --exact h2 (h1 p)    -- Q is true because P is true and P implies Q
 
 
-/-!
-## 5. An inconsistent system
+example (P Q : Prop) : ( P → Q) → (¬Q → ¬P) := by
+  intro h1 h2 p  -- assume P implies Q, not Q, and P
+  have q : Q := h1 p -- We have Q because P is true and P implies Q
+  contradiction -- We have a contradiction because we have Q and not Q
 
-If two equations contradict each other, there is no solution.
-In Lean, "there is a contradiction" means that we can prove `False`.
+example (P Q : Prop) (h : P → Q) : ¬Q → ¬P := by
+  intro h1 p -- assume not Q and P
+  apply h1   -- Give the proof of Q to h1: Q → False, which will give us a proof of False
+  exact h p  -- Q is true because P is true and P implies Q
+
+example (P Q : Prop) : (P ∧ ¬P) → Q := by
+  intro h
+  obtain ⟨p, notp⟩ := h
+  --rcases h with ⟨p, notp⟩
+  --contradiction
+  exfalso
+  exact notp p --p notp
+  /-cases h with
+  | intro p notp =>
+      exfalso
+      exact notp p-/
+  /-
+  cases h with
+  | intro p notp => contradiction -- We have a contradiction because we have P and not P
+  -/
+
+example (x y a b : ℝ) (h1 : x < y) (h2 : a < b) : x + a < y + b := by
+  linarith [h1, h2] -- linarith is a tactic that solves linear inequalities
+  -- apply add_lt_add h1 h2
+
+example (G : Type) (hg : Group G) (a b c : G) : a * a⁻¹ * 1 * b = b * c * c⁻¹ := by
+  simp
+
+/-
+Assume x is a natural number.
+Proof that x ≤ 1 + x.
+
+proof. We have a theorem which says that a≤b with a and b ∈ ℝ
+if and only if there is a c ∈ ℝ such that a+c=b.
+So, instead of proving x ≤ 1+x, we can show that there exists a such c ∈ ℝ.
+Let c=1. We have the desired equality with some linear arithmetics.
 -/
+example (x : Nat) : x ≤ 1 + x := by
+  rw[le_iff_exists_add]
+  -- le_iff_exists_add is a theorem that states that x ≤ y if and only if there exists a natural number z such that x + z = y
+  use 1  -- use 1 as the natural number z
+  linarith  -- 1+X = X+1 is a simple arithmetic fact that can be proved by linarith
 
-example (x y : ℝ)
-    (h1 : x + y = 3)
-    (h2 : 2 * x + 2 * y = 7) :
-    False := by
-  linarith [h1, h2]
+example (x : Nat) : x ≤ 1 + x := by
+  induction x with
+  | zero => simp --linarith
+  | succ x ih => linarith
 
+example (n : Nat) : 0 + n = n := by
+  induction n with
+  | zero => linarith
+  | succ n ih => linarith
 
-/-!
-## 6. Row operations preserve the solution set
-
-A row operation should not change which values solve the system.
-We can express "the two systems have exactly the same solutions" using `↔`.
-
-### Multiplying an equation by a nonzero scalar
--/
-
-example (x y : ℝ) :
-    (x - 2 * y = 3) ↔ (3 * x - 6 * y = 9) := by
-  constructor
-  · intro h
-    linarith [h]
-  · intro h
-    linarith [h]
-
-
-/-!
-### Replacing one row by the sum of two rows
-
-From
-
-    x + y = 5
-    2x - y = 1
-
-adding the two equations gives `3x = 6`.
--/
-
-example (x y : ℝ) :
-    (x + y = 5 ∧ 2 * x - y = 1) ↔
-    (x + y = 5 ∧ 3 * x = 6) := by
-  constructor
-  · rintro ⟨h1, h2⟩
-    constructor
-    · exact h1
-    · linarith [h1, h2]
-  · rintro ⟨h1, h2⟩
-    constructor
-    · exact h1
-    · linarith [h1, h2]
-
-
-/-!
-## 7. A redundant equation
-
-The second equation below contains no new information: it is just three
-times the first equation.
--/
-
-example (x y : ℝ) :
-    (x - 2 * y = 4 ∧ 3 * x - 6 * y = 12) ↔
-    (x - 2 * y = 4) := by
-  constructor
-  · intro h
-    exact h.1
-  · intro h
-    constructor
-    · exact h
-    · linarith [h]
-
-
-/-!
-## 8. Uniqueness of a solution
-
-If `(x,y)` and `(u,v)` both solve a system with a unique solution,
-then the two pairs must be equal.
--/
-
-example (x y u v : ℝ)
-    (hxy1 : 2 * x + y = 7)
-    (hxy2 : x - y = 2)
-    (huv1 : 2 * u + v = 7)
-    (huv2 : u - v = 2) :
-    x = u ∧ y = v := by
-  constructor
-  · linarith [hxy1, hxy2, huv1, huv2]
-  · linarith [hxy1, hxy2, huv1, huv2]
-
-
-/-!
-## 9. A free variable
-
-This system has two equations and three unknowns.  It does not determine
-all three variables.  Lean can still tell us exactly what is forced by
-the equations.
--/
-
-example (x y z : ℝ)
-    (h1 : x + y + z = 6)
-    (h2 : x - y + z = 2) :
-    y = 2 ∧ x = 4 - z := by
-  constructor
-  · linarith [h1, h2]
-  · linarith [h1, h2]
+-- The sum of the first n odd numbers is n^2.
+example (n : ℕ) : ∑ k ∈ Finset.range n, (2 * k + 1) = n ^ 2 := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [Finset.sum_range_succ, ih]
+      ring
