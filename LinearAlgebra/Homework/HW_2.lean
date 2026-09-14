@@ -1,90 +1,151 @@
 import Mathlib
+import LinearAlgebra.CourseTools
+
+open scoped BigOperators
 
 /-!
-# Homework 2 — Solving Systems of Linear Equations
+# Homework 2 — Proof Language in Lean
+
+This homework is based on the new Class 2 lecture note.
+The goal is to practice recognizing the logical structure of a statement
+and choosing an appropriate Lean proof style.
+
+You may use tactics and ideas from Class 2, including
+`intro`, `exact`, `apply`, `assumption`, `constructor`, `refine`,
+`cases`, `rcases`, `rintro`, `left`, `right`, `use`, `rw`, `subst`,
+`congrArg`, `by_cases`, `contradiction`, `have`, `suffices`,
+`simp`, `norm_num`, `ring`, `linarith`, `funext`, `ext`, and `fin_cases`.
 -/
 
 
 /-!
-Exercise 1 — A 2 × 2 system
+## Exercise 1 — Equality in two proof styles
 
-Solve the system and prove both values.
+Assume `x = y`. Prove that applying the same expression to `x` and `y`
+gives the same result.
+
+Prove the statement twice:
+
+* in (a), use `rw`;
+* in (b), use `congrArg`.
+
+The mathematical statement is the same, but the proof styles are different.
 -/
 
-example (x y : ℝ)
-    (h1 : 3 * x + 2 * y = 13)
-    (h2 : x - y = 1) :
-    x = 3 ∧ y = 2 := by
+-- (a) Use `rw`.
+example (x y z : ℝ) (h : x = y) :
+    (x + z) ^ 2 = (y + z) ^ 2 := by
+  sorry
+
+
+-- (b) Use `congrArg`.
+example (x y z : ℝ) (h : x = y) :
+    (x + z) ^ 2 = (y + z) ^ 2 := by
   sorry
 
 
 /-!
-Exercise 2 — A 3 × 3 system
+## Exercise 2 — Conjunction and disjunction
 
-Solve the system for `x`, `y`, and `z`.
+Prove the distributive implication
+
+    P ∧ (Q ∨ R)  →  (P ∧ Q) ∨ (P ∧ R).
+
+Try to expose the structure of the hypothesis using `rintro` or `rcases`,
+then split into the two possible cases of `Q ∨ R`.
 -/
 
-example (x y z : ℝ)
-    (h1 : x + 2 * y + z = 7)
-    (h2 : 2 * x - y + 3 * z = 6)
-    (h3 : 3 * x + y - z = 3) :
-    x = 1 ∧ y = 2 ∧ z = 2 := by
+example (P Q R : Prop) :
+    P ∧ (Q ∨ R) → (P ∧ Q) ∨ (P ∧ R) := by
   sorry
 
 
 /-!
-Exercise 3 — No solution
+## Exercise 3 — Extracting an existential witness
 
-Show that these two equations are inconsistent.
+Suppose there exists an object satisfying both `P` and `Q`.
+Show that there exists an object satisfying `P`, and there exists
+an object satisfying `Q`.
+
+The same witness may be used for both existential statements.
 -/
 
-example (x y : ℝ)
-    (h1 : 2 * x - y = 3)
-    (h2 : 4 * x - 2 * y = 8) :
-    False := by
+example {α : Type*} (P Q : α → Prop) :
+    (∃ x, P x ∧ Q x) → (∃ x, P x) ∧ (∃ x, Q x) := by
   sorry
 
 
 /-!
-Exercise 4 — One step of Gaussian elimination
+## Exercise 4 — Proof by cases
 
-Prove that the two systems have exactly the same solutions.
+Prove
 
-Hint: three times the first equation minus the second equation gives
-`7y = 11`.
+    P ∨ (P → Q).
+
+Hint: use `by_cases h : P`.
+
+* If `P` is true, prove the left side of the disjunction.
+* If `P` is false, prove `P → Q` by assuming `P` and obtaining a
+  contradiction.
 -/
 
-example (x y : ℝ) :
-    (x + 2 * y = 5 ∧ 3 * x - y = 4) ↔
-    (x + 2 * y = 5 ∧ 7 * y = 11) := by
+example (P Q : Prop) :
+    P ∨ (P → Q) := by
   sorry
 
 
 /-!
-Exercise 5 — Uniqueness without first finding the solution
+## Exercise 5 — Equality of concrete matrices
 
-Suppose `(x,y)` and `(u,v)` are both solutions of the same system.
-Prove that the two solutions are equal.
+The two matrices below are written using different expressions,
+but they define the same matrix.
+
+Prove that they are equal.
+
+Suggested strategy:
+
+1. use `ext row col`;
+2. use `fin_cases` on the row and column indices;
+3. finish each scalar identity with `ring` or another suitable tactic.
 -/
 
-example (x y u v : ℝ)
-    (hxy1 : 4 * x + y = 9)
-    (hxy2 : x - 2 * y = -3)
-    (huv1 : 4 * u + v = 9)
-    (huv2 : u - 2 * v = -3) :
-    x = u ∧ y = v := by
+def M₁ (x : ℝ) : Matrix (Fin 2) (Fin 2) ℝ :=
+  !![(x + 1) ^ 2, 2 * x + 2;
+     x - x,         3]
+
+
+def M₂ (x : ℝ) : Matrix (Fin 2) (Fin 2) ℝ :=
+  !![x ^ 2 + 2 * x + 1, 2 * (x + 1);
+     0,                 3]
+
+
+example (x : ℝ) : M₁ x = M₂ x := by
   sorry
 
 
 /-!
-Exercise 6 — A free variable
+## Exercise 6 — Induction and finite sums
 
-The system has three unknowns but only two independent equations.
-Determine `y`, and express `x` in terms of the free variable `z`.
+Prove the identity
+
+    1 + 7 + 19 + ... = n^3,
+
+where the `k`th summand is
+
+    3k² + 3k + 1.
+
+This is similar in structure to the induction example from class,
+but it is a different identity.
+
+Useful observation:
+
+    3k² + 3k + 1 = (k + 1)^3 - k^3.
+
+You may want to use `Finset.sum_range_succ` in the induction step.
 -/
 
-example (x y z : ℝ)
-    (h1 : x + y + z = 5)
-    (h2 : x - y + z = 1) :
-    y = 2 ∧ x = 3 - z := by
+example (n : ℕ) :
+    Finset.sum (Finset.range n)
+      (fun k => 3 * k^2 + 3 * k + 1)
+      = n^3 := by
   sorry

@@ -4,6 +4,16 @@ open Matrix
 open scoped BigOperators
 
 
+example (x y : ℝ) (h : x = y) :
+    x^2 = y^2 := by
+  exact congrArg (fun t => t^2) h
+
+example (f g : ℝ → ℝ)
+    (h : ∀ x, f x = g x) :
+    f = g := by
+  funext x
+  exact h x
+
 /-* Lemma 2.1 - Assume that $A$ and $B$ are matrices of sizes $m\times n$ and $p\times q$.
 If $AB = BA$, then $m=n=p=q$; that is, $A$ and $B$ are square matrices of the same size.
 

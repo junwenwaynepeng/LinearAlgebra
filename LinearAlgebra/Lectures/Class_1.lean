@@ -1,210 +1,241 @@
 import Mathlib
+import LinearAlgebra.CourseTools
+
+/-!
+# Class 1 — Getting Started with Lean and Gaussian Elimination
+
+## Goals for today
+
+1. Install Lean and Visual Studio Code.
+2. Clone and update the course repository with GitHub.
+3. Learn how to interact with Lean using `#check` and `#eval`.
+4. Learn how Lean represents a matrix.
+5. See one very small proof.
+6. Preview how Lean checks equality of matrices.
+7. Use the three elementary row operations.
+8. Verify a complete Gaussian elimination in Lean.
+
+The goal of the first class is to **use Lean successfully**.
+We will explain more of the proof language in Class 2.
+-/
 
 open Matrix
 
 
 /-!
-# Class 1 — Solving Systems of Linear Equations in Lean
+## 0. Setup: Lean, VS Code, and GitHub
 
-The main idea is simple:
+### Install
 
-* each equation is a hypothesis;
-* `rw` can be used for substitution;
-* `linarith` can perform linear elimination;
-* a system with no solution can be proved by deriving `False`;
-* row operations can be expressed as logical equivalences;
-* Lean can also prove uniqueness or describe a free variable.
+You need:
+
+* Git
+* Visual Studio Code
+* the official **Lean 4** extension for VS Code
+* Lean installed through `elan`
+
+See the repository `README.md` for platform-specific installation instructions.
+
+### Clone the course repository
+
+Run these commands in a terminal:
+
+```text
+git clone https://github.com/junwenwaynepeng/LinearAlgebra.git
+cd LinearAlgebra
+lake exe cache get
+lake build
+code .
+```
+
+Clone the repository only once.
+
+### Updating the course
+
+For later updates, run:
+
+```text
+./update_course.sh
+```
+
+On Windows with Git Bash:
+
+```text
+bash update_course.sh
+```
+
+### Where should I write my own code?
+
+Instructor-maintained files are stored in:
+
+```text
+LinearAlgebra/Lectures/
+LinearAlgebra/Homework/
+```
+
+Put your own work in:
+
+```text
+MyWork/
+```
+
+If Lean does not recognize a newly updated library file, use this order:
+
+1. Save the library file.
+2. Run `lake build`.
+3. Restart the Lean server in VS Code.
 -/
 
 
 /-!
-## 1. Rearranging one linear equation
+## 1. First interaction with Lean
 
-`linarith` can rearrange a linear equation for us.
+`#check` asks Lean:
+
+> What kind of object is this?
+
+`#eval` asks Lean:
+
+> What does this computable expression evaluate to?
 -/
 
-example (x y : ℝ)
-    (h : x + y = 7) :
-    y = 7 - x := by
-  linarith [h]
+#check 3
+#check (3 : ℝ)
+
+#eval (2 + 3 : Nat)
+#eval (3 : Int) ^ 4
 
 
 /-!
-## 2. Solving a 2 × 2 system by substitution
+## 2. A matrix in Lean
 
-We first solve the first equation for `y`, substitute it into the second
-with `rw`, and then recover `y`.
+`Matrix (Fin 2) (Fin 3) ℤ` means a `2 × 3` integer matrix.
+
+For now, you do not need to understand the implementation of `Fin`.
+Just remember that Lean counts from `0`.
 -/
 
-example (x y : ℝ)
-    (h1 : 2 * x + y = 11)
-    (h2 : x - y = 1) :
-    x = 4 ∧ y = 3 := by
-  have hy : y = 11 - 2 * x := by
-    linarith [h1]
+def M : Matrix (Fin 2) (Fin 3) ℤ :=
+  !![1, 2, 3;
+     4, 5, 6]
 
-  rw [hy] at h2
+#check M
+#check M 0 1
 
-  have hx : x = 4 := by
-    linarith [h2]
-
-  rw [hx] at hy
-  norm_num at hy
-
-  exact ⟨hx, hy⟩
+#eval M 0 0
+#eval M 0 1
+#eval M 1 2
 
 
 /-!
-## 3. Letting `linarith` do the elimination
+## 3. A first proof
 
-For a linear system over `ℝ`, `linarith` can often eliminate the variables
-directly.
+The general shape is
+
+```text
+example : statement := by
+  proof
+```
+
+`rfl` proves an equality that is true by definition.
+
+`norm_num` proves straightforward numerical arithmetic.
 -/
 
-example (x y : ℝ)
-    (h1 : 3 * x + 2 * y = 16)
-    (h2 : x - y = 2) :
-    x = 4 ∧ y = 2 := by
-  constructor
-  · linarith [h1, h2]
-  · linarith [h1, h2]
+example (x : ℝ) : x = x := by
+  rfl
+
+example : (2 : ℝ) + 3 = 5 := by
+  norm_num
 
 
 /-!
-## 4. A system with three variables
+## 4. Preview: equality of matrices
+
+A matrix is, internally, a function of a row and a column.
+
+To prove two matrices are equal, we can check that every entry is equal.
+
+Do not worry about every tactic in this example yet.
+We will return to `funext`, `fin_cases`, and `norm_num` in Class 2.
 -/
 
-example (x y z : ℝ)
-    (h1 : x + y + z = 6)
-    (h2 : 2 * x - y + z = 3)
-    (h3 : x + 2 * y - z = 2) :
-    x = 1 ∧ y = 2 ∧ z = 3 := by
-  constructor
-  · linarith [h1, h2, h3]
-  · constructor
-    · linarith [h1, h2, h3]
-    · linarith [h1, h2, h3]
+def C : Matrix (Fin 2) (Fin 2) ℤ :=
+  !![1, 2;
+     3, 4]
+
+def D : Matrix (Fin 2) (Fin 2) ℤ :=
+  !![1, 2;
+     3, 4]
+
+example : C = D := by
+  funext row col
+  fin_cases row <;> fin_cases col <;>
+    norm_num [C, D]
 
 
 /-!
-## 5. An inconsistent system
+## 5. Elementary row operations
 
-If two equations contradict each other, there is no solution.
-In Lean, "there is a contradiction" means that we can prove `False`.
+Mathlib contains an official notion of row equivalence.
+
+The elementary matrices we use are:
+
+* `Matrix.swap` — swap two rows;
+* `Matrix.rowScale` — multiply one row by a nonzero scalar;
+* `Matrix.transvection` — add a multiple of one row to another row.
+
+Our course library provides shorter commands:
+
+```text
+row_swap  A => B, i, j
+row_scale A => B, i, c
+row_add   A => B, i, j, c
+```
+
+Lean starts counting rows at `0`:
+
+```text
+Lean row 0 = R₁
+Lean row 1 = R₂
+Lean row 2 = R₃
+```
 -/
 
-example (x y : ℝ)
-    (h1 : x + y = 3)
-    (h2 : 2 * x + 2 * y = 7) :
-    False := by
-  linarith [h1, h2]
+#check Matrix.RowEquivalent
+#check Matrix.transvection
+#check Matrix.swap
+#check Matrix.rowScale
 
 
 /-!
-## 6. Row operations preserve the solution set
+## 6. Gaussian elimination
 
-A row operation should not change which values solve the system.
-We can express "the two systems have exactly the same solutions" using `↔`.
+We now verify a complete Gaussian elimination.
 
-### Multiplying an equation by a nonzero scalar
--/
+Start with the augmented matrix
 
-example (x y : ℝ) :
-    (x - 2 * y = 3) ↔ (3 * x - 6 * y = 9) := by
-  constructor
-  · intro h
-    linarith [h]
-  · intro h
-    linarith [h]
+```text
+[ 0  2  0 | 2 ]
+[ 1  0  1 | 3 ]
+[ 0  0  3 | 6 ]
+```
 
+and reduce it to
 
-/-!
-### Replacing one row by the sum of two rows
+```text
+[ 1  0  0 | 1 ]
+[ 0  1  0 | 1 ]
+[ 0  0  1 | 2 ]
+```
 
-From
-
-    x + y = 5
-    2x - y = 1
-
-adding the two equations gives `3x = 6`.
--/
-
-example (x y : ℝ) :
-    (x + y = 5 ∧ 2 * x - y = 1) ↔
-    (x + y = 5 ∧ 3 * x = 6) := by
-  constructor
-  · rintro ⟨h1, h2⟩
-    constructor
-    · exact h1
-    · linarith [h1, h2]
-  · rintro ⟨h1, h2⟩
-    constructor
-    · exact h1
-    · linarith [h1, h2]
-
-
-/-!
-## 7. A redundant equation
-
-The second equation below contains no new information: it is just three
-times the first equation.
--/
-
-example (x y : ℝ) :
-    (x - 2 * y = 4 ∧ 3 * x - 6 * y = 12) ↔
-    (x - 2 * y = 4) := by
-  constructor
-  · intro h
-    exact h.1
-  · intro h
-    constructor
-    · exact h
-    · linarith [h]
-
-
-/-!
-## 8. Uniqueness of a solution
-
-If `(x,y)` and `(u,v)` both solve a system with a unique solution,
-then the two pairs must be equal.
--/
-
-example (x y u v : ℝ)
-    (hxy1 : 2 * x + y = 7)
-    (hxy2 : x - y = 2)
-    (huv1 : 2 * u + v = 7)
-    (huv2 : u - v = 2) :
-    x = u ∧ y = v := by
-  constructor
-  · linarith [hxy1, hxy2, huv1, huv2]
-  · linarith [hxy1, hxy2, huv1, huv2]
-
-
-/-!
-## 9. A free variable
-
-This system has two equations and three unknowns.  It does not determine
-all three variables.  Lean can still tell us exactly what is forced by
-the equations.
--/
-
-example (x y z : ℝ)
-    (h1 : x + y + z = 6)
-    (h2 : x - y + z = 2) :
-    y = 2 ∧ x = 4 - z := by
-  constructor
-  · linarith [h1, h2]
-  · linarith [h1, h2]
-
-
-/-!
-# Gaussian Elimiation
+This example uses all three elementary row operations.
 -/
 
 def A : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![2,  1, 1,  5;
-     4, -6, 0, -2;
-    -2,  7, 2,  9]
+  !![0, 2, 0, 2;
+     1, 0, 1, 3;
+     0, 0, 3, 6]
 
 def B : Matrix (Fin 3) (Fin 4) ℝ :=
   !![1, 0, 0, 1;
@@ -212,126 +243,69 @@ def B : Matrix (Fin 3) (Fin 4) ℝ :=
      0, 0, 1, 2]
 
 
--- R₂ ← R₂ - 2R₁
+-- R₁ ↔ R₂
 def A₁ : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![2,  1,  1,   5;
-     0, -8, -2, -12;
-    -2,  7,  2,   9]
+  !![1, 0, 1, 3;
+     0, 2, 0, 2;
+     0, 0, 3, 6]
 
--- R₃ ← R₃ + R₁
+
+-- R₂ ← (1/2)R₂
 def A₂ : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![2,  1,  1,   5;
-     0, -8, -2, -12;
-     0,  8,  3,  14]
+  !![1, 0, 1, 3;
+     0, 1, 0, 1;
+     0, 0, 3, 6]
 
--- R₃ ← R₃ + R₂
+
+-- R₃ ← (1/3)R₃
 def A₃ : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![2,  1,  1,   5;
-     0, -8, -2, -12;
-     0,  0,  1,   2]
-
--- R₂ ← R₂ + 2R₃
-def A₄ : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![2,  1, 1,  5;
-     0, -8, 0, -8;
-     0,  0, 1,  2]
-
--- R₂ ← (-1/8)R₂
-def A₅ : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![2, 1, 1, 5;
+  !![1, 0, 1, 3;
      0, 1, 0, 1;
      0, 0, 1, 2]
 
--- R₁ ← R₁ - R₂
-def A₆ : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![2, 0, 1, 4;
-     0, 1, 0, 1;
-     0, 0, 1, 2]
-
--- R₁ ← R₁ - R₃
-def A₇ : Matrix (Fin 3) (Fin 4) ℝ :=
-  !![2, 0, 0, 2;
-     0, 1, 0, 1;
-     0, 0, 1, 2]
-
-#check Matrix.transvection
-#check Matrix.swap
-#check Matrix.scalar
 
 example : Matrix.RowEquivalent A B := by
-
-  -- R₂ ← R₂ - 2R₁
+  -- R₁ ↔ R₂
   have h₁ : Matrix.RowEquivalent A A₁ := by
-    convert Matrix.rowEquivalent_transvection
-      A (1 : Fin 3) (0 : Fin 3) (by decide) (-2 : ℝ) using 1
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [A, A₁]
+    row_swap A => A₁, 0, 1
 
-  -- R₃ ← R₃ + R₁
+  -- R₂ ← (1/2)R₂
   have h₂ : Matrix.RowEquivalent A₁ A₂ := by
-    convert Matrix.rowEquivalent_transvection
-      A₁ (2 : Fin 3) (0 : Fin 3) (by decide) (1 : ℝ) using 1
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [A₁, A₂]
+    row_scale A₁ => A₂, 1, (1 / 2 : ℝ)
 
-  -- R₃ ← R₃ + R₂
+  -- R₃ ← (1/3)R₃
   have h₃ : Matrix.RowEquivalent A₂ A₃ := by
-    convert Matrix.rowEquivalent_transvection
-      A₂ (2 : Fin 3) (1 : Fin 3) (by decide) (1 : ℝ) using 1
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [A₂, A₃]
-
-  -- R₂ ← R₂ + 2R₃
-  have h₄ : Matrix.RowEquivalent A₃ A₄ := by
-    convert Matrix.rowEquivalent_transvection
-      A₃ (1 : Fin 3) (2 : Fin 3) (by decide) (2 : ℝ) using 1
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [A₃, A₄]
-
-  -- R₂ ← (-1/8)R₂
-  have h₅ : Matrix.RowEquivalent A₄ A₅ := by
-    let c : ℝˣ := Units.mk0 (-1 / 8 : ℝ) (by norm_num)
-    convert Matrix.rowEquivalent_rowScale
-      A₄ (1 : Fin 3) c using 1
-    rw [Matrix.rowScale_mul]
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [A₄, A₅, Matrix.updateRow_apply, c]
-
-  -- R₁ ← R₁ - R₂
-  have h₆ : Matrix.RowEquivalent A₅ A₆ := by
-    convert Matrix.rowEquivalent_transvection
-      A₅ (0 : Fin 3) (1 : Fin 3) (by decide) (-1 : ℝ) using 1
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [A₅, A₆]
+    row_scale A₂ => A₃, 2, (1 / 3 : ℝ)
 
   -- R₁ ← R₁ - R₃
-  have h₇ : Matrix.RowEquivalent A₆ A₇ := by
-    convert Matrix.rowEquivalent_transvection
-      A₆ (0 : Fin 3) (2 : Fin 3) (by decide) (-1 : ℝ) using 1
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [A₆, A₇]
+  have h₄ : Matrix.RowEquivalent A₃ B := by
+    row_add A₃ => B, 0, 2, (-1 : ℝ)
 
-  -- R₁ ← (1/2)R₁
-  have h₈ : Matrix.RowEquivalent A₇ B := by
-    let c : ℝˣ := Units.mk0 (1 / 2 : ℝ) (by norm_num)
-    convert Matrix.rowEquivalent_rowScale
-      A₇ (0 : Fin 3) c using 1
-    rw [Matrix.rowScale_mul]
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      norm_num [A₇, B, Matrix.updateRow_apply, c]
+  -- Row equivalence is transitive.
+  exact h₁.trans (h₂.trans (h₃.trans h₄))
 
-  exact h₁.trans <|
-    h₂.trans <|
-    h₃.trans <|
-    h₄.trans <|
-    h₅.trans <|
-    h₆.trans <|
-    h₇.trans h₈
+
+/-!
+## 7. What happened behind the scenes?
+
+The commands
+
+```text
+row_swap
+row_scale
+row_add
+```
+
+are small course tools built on top of Mathlib's official theorems.
+
+They hide some Lean techniques that we do not need on the first day, including:
+
+* `convert`
+* `by decide`
+* `funext`
+* `fin_cases`
+* `simp`
+* `norm_num`
+
+In Class 2, we will open this box and learn what these ideas mean.
+-/
