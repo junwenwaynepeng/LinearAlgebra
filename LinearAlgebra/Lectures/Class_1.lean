@@ -105,7 +105,6 @@ If Lean does not recognize a newly updated library file, use this order:
 #eval (2 + 3 : Nat)
 #eval (3 : Int) ^ 4
 
-
 /-!
 ## 2. A matrix in Lean
 
@@ -140,6 +139,12 @@ example : statement := by
 `rfl` proves an equality that is true by definition.
 
 `norm_num` proves straightforward numerical arithmetic.
+
+`constructor` splits the goal P ∧ Q to two subgoals P and Q
+
+`linarith` proves straightforward linear arithmetic
+
+`rw [h1] at h2` rewrties the hypothesis h2 using hypothesis h1
 -/
 
 example (x : ℝ) : x = x := by
@@ -148,6 +153,24 @@ example (x : ℝ) : x = x := by
 example : (2 : ℝ) + 3 = 5 := by
   norm_num
 
+example (x y : ℝ) (eq1 : 2 * x + y = 5) (eq2 : x - y = 1) :
+    x = 2 ∧ y = 1 := by
+  constructor <;> linarith
+
+example (x y z : ℝ) (eq1 : 2 * x + y + z = 4)
+(eq2 : x - y + 2 * z = -1)
+(eq3 : x - z = 3) :
+    x = 2 ∧ y = 1 ∧ z = -1 := by
+  constructor
+  · linarith
+  · constructor <;> linarith
+
+example (x y : ℝ) (eq1 : x - y = 4) (eq2 : x - y = 5) : false :=by
+  linarith
+
+example (x y : ℝ) (eq1 : x - y = 4) (eq2 : x - y = 5) : false := by
+  rw [eq2] at eq1
+  norm_num at eq1
 
 /-!
 ## 4. Preview: equality of matrices
@@ -230,7 +253,41 @@ and reduce it to
 ```
 
 This example uses all three elementary row operations.
+To make the process easier to follow,
+we provide both computational tools
+and customized tactics for performing the row operations
+and proving that each step is valid.
+
+### Computation
+
+`rowAdd A i j c` computes the row operation R_i \leftarrow R_i + cR_j.
+
+`rowSwap A i j` computes the row operation R_i \leftrightarrow R_j.
+
+`rowScale' A i c` computes the row operation R_i \leftarrow cR_i.
+
+### Tactics
+
+`row_swap A => A₁, i, j` verifies that A₁ is row equivalent to A by swapping rows i and j.
+
+`row_scale A => A₁, i, (c : ℝ)` verifies that A₁ is row equivalent to A by scaling row i by c.
+
+`row_add A => A₁, i, j, (c : ℝ)` verifies that A₁ is row equivalent to A by performing the row operation
+R_i \leftarrow R_i + cR_j.
+
 -/
+
+def AA : Matrix (Fin 3) (Fin 3) ℚ :=
+  !![1, 2, 3;
+     4, 5, 6;
+     7, 8, 9]
+
+#eval showMatrix (rowScale' AA 1 2)
+#eval showMatrix (rowScale' AA 1 2)
+def BB : Matrix (Fin 3) (Fin 3) ℚ :=
+  rowSwap AA 0 1
+#eval showMatrix (rowScale' BB 1 2)
+#eval showMatrix (rowAdd BB 0 1 2)
 
 def A : Matrix (Fin 3) (Fin 4) ℝ :=
   !![0, 2, 0, 2;
@@ -282,7 +339,23 @@ example : Matrix.RowEquivalent A B := by
     row_add A₃ => B, 0, 2, (-1 : ℝ)
 
   -- Row equivalence is transitive.
-  exact h₁.trans (h₂.trans (h₃.trans h₄))
+  -- exact h₁.trans (h₂.trans (h₃.trans h₄))
+  exact h₁.trans <| h₂.trans <| h₃.trans <| h₄
+
+
+example : Matrix.RowEquivalent A B := by
+  calc
+    Matrix.RowEquivalent A A₁ := by
+      row_swap A => A₁, 0, 1
+    -- R₂ ← (1/2)R₂
+    Matrix.RowEquivalent A₁ A₂ := by
+      row_scale A₁ => A₂, 1, (1 / 2 : ℝ)
+    -- R₃ ← (1/3)R₃
+    Matrix.RowEquivalent A₂ A₃ := by
+      row_scale A₂ => A₃, 2, (1 / 3 : ℝ)
+    -- R₁ ← R₁ - R₃
+    Matrix.RowEquivalent A₃ B := by
+      row_add A₃ => B, 0, 2, (-1 : ℝ)
 
 
 /-!

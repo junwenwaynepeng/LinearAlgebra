@@ -58,3 +58,22 @@ instance rowEquivalentTrans
       (Matrix.RowEquivalent : Matrix m n R → Matrix m n R → Prop)
       (Matrix.RowEquivalent : Matrix m n R → Matrix m n R → Prop) where
   trans := Matrix.RowEquivalent.trans
+
+def showMatrix {m n : Nat}
+    (A : Matrix (Fin m) (Fin n) ℚ) :=
+  List.ofFn (fun i => List.ofFn (fun j => A i j))
+
+def rowSwap {m n : Nat}
+    (A : Matrix (Fin m) (Fin n) ℚ)
+    (i j : Fin m) :=
+  (A.updateRow i (A j)).updateRow j (A i)
+
+def rowScale' {m n : Nat}
+    (A : Matrix (Fin m) (Fin n) ℚ)
+    (i : Fin m) (c : ℚ) :=
+  A.updateRow i (fun j => c * A i j)
+
+def rowAdd {m n : Nat}
+    (A : Matrix (Fin m) (Fin n) ℚ)
+    (i j : Fin m) (c : ℚ) :=
+  A.updateRow i (fun k => A i k + c * A j k)
