@@ -1,6 +1,6 @@
 import Mathlib
 import LinearAlgebra.CourseTools
-
+/-! -/
 open scoped BigOperators
 
 /-!
