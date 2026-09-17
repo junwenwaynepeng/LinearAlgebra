@@ -61,334 +61,319 @@ This prevents future course updates from conflicting with your work.
 
 ---
 
-## 2. Install Lean
+## Install Lean for This Course
 
-The recommended setup is:
+This course uses Lean through Visual Studio Code. Before installing anything, it is helpful to distinguish three different components:
 
-1. Install Git
-2. Install Visual Studio Code
-3. the official **Lean 4** extension for VS Code
-4. `elan`, the Lean version manager (Instruction)[https://lean-lang.org/install/manual/?utm_source=chatgpt.com]
-4. Make sure Elan is installed
-5. Clone the course repository
-6. Open the repository in VS Code
+* **Lean 4** is the theorem prover and programming language itself.
+* The **Lean 4 extension for Visual Studio Code** helps VS Code work with Lean. It provides syntax highlighting, the Infoview, error messages, and Lean-related commands. The extension itself is **not Lean**.
+* **Elan** is the Lean version manager. It installs and manages Lean toolchains and allows different projects to use different versions of Lean.
 
-Jump to your OS [Windows](#windows) [Ununtu/Linux](#ubuntu--linux) [Mac](#macos)
+You do **not** need to manually choose or download a specific Lean version for this course. The course repository specifies the required version.
 
-**You do not need to install a specific version of Lean manually.**
-We use `elan`, the Lean version manager. This repository contains a `lean-toolchain` file that tells `elan` which version of Lean the course requires. When the course Lean version changes, `elan` will automatically use the version specified by the repository.
+---
 
+### Step 1. Install Visual Studio Code
 
-### Windows
+Download and install Visual Studio Code:
 
-1. Install Git: https://git-scm.com/download/win
-2. Install Visual Studio Code: https://code.visualstudio.com/
-3. In VS Code, install the extension **Lean 4** by `leanprover`.
-4. Follow the extension instructions to install Lean through `elan`.
+https://code.visualstudio.com/
 
-For the update script in this repository, Windows users should use **Git Bash** or **WSL**.
+---
 
-### Ubuntu / Linux
+### Step 2. Install the Lean 4 extension
 
-Install Git and `curl`:
+Open VS Code and go to **Extensions**.
 
-```bash
-sudo apt update
-sudo apt install git curl
-```
-
-Install Lean through `elan`:
-
-```bash
-curl https://elan.lean-lang.org/elan-init.sh -sSf | sh
-source "$HOME/.elan/env"
-```
-
-Then install Visual Studio Code and the official **Lean 4** extension.
-
-### macOS
-
-Install Lean through `elan`:
-
-```bash
-curl https://elan.lean-lang.org/elan-init.sh -sSf | sh
-source "$HOME/.elan/env"
-```
-
-Then install Visual Studio Code and the official **Lean 4** extension.
-
-### iPad / iPhone
-
-A practical option is **GitHub Codespaces**. Open this repository on GitHub and choose:
+Search for:
 
 ```text
-Code → Codespaces → Create codespace
+Lean 4
 ```
 
-You can then use the browser version of VS Code.
+Install the official extension published by `leanprover`.
+
+At this point, VS Code knows how to work with Lean files, but the actual Lean toolchain may not yet be installed.
 
 ---
 
-## 3. First-time setup
+### Step 3. Install Elan
 
-Clone the repository instead of downloading a ZIP file:
+In VS Code, press:
+
+```text
+Ctrl + Shift + P
+```
+
+Search for:
+
+```text
+Lean 4: Setup: Install Elan
+```
+
+Run the command and follow the instructions.
+
+Elan manages the Lean versions installed on your computer.
+
+You do not need to manually select the Lean version for this course. The course project contains a `lean-toolchain` file that tells Elan which version to use.
+
+---
+
+### Step 4. Install Git
+
+This course is distributed through GitHub, so Git is required.
+
+First check whether Git is already installed:
 
 ```bash
-git clone https://github.com/junwenwaynepeng/LinearAlgebra.git
-cd LinearAlgebra
-lake exe cache get
-lake build
-code .
+git --version
 ```
 
-You normally only need to clone the repository once.
+If this prints a version number, continue to Step 5.
 
-`lake exe cache get` downloads precompiled mathlib files so that your computer does not need to compile most of mathlib from source.
+#### Windows
 
----
+Install **Git for Windows**:
 
-## 4. Updating the course
+https://git-scm.com/download/win
 
-The course repository may change during the semester. For example, new lecture files may be added, homework may be released, Lean examples may be corrected, or the mathlib version may be updated.
+Git for Windows also installs **Git Bash**, which will be useful for running the course update script.
 
-### Recommended method
+After installation, open Git Bash and check:
+
+```bash
+git --version
+```
+
+#### Ubuntu / Debian Linux
 
 Run:
 
 ```bash
-./update_course.sh
+sudo apt update
+sudo apt install git
 ```
 
-On Windows using Git Bash:
+Then check:
 
 ```bash
-bash update_course.sh
+git --version
 ```
 
-The update script will:
-
-1. check that your repository has no uncommitted changes;
-2. download the newest course files;
-3. update Lean/mathlib dependencies;
-4. download the matching mathlib cache;
-5. run `lake build` to make sure the project is working.
-
-### If you cloned the repository before `update_course.sh` was added
-
-Run this once:
-
-```bash
-git pull --ff-only
-bash update_course.sh
-```
-
-After that, you can normally use only:
-
-```bash
-bash update_course.sh
-```
-
----
-
-## 5. Important: protect your own work
-
-The updater intentionally stops if Git detects uncommitted changes. This is a safety feature.
-
-If you have changed files, first save your work:
-
-```bash
-git status
-git add .
-git commit -m "Save my work"
-```
-
-Then run:
-
-```bash
-./update_course.sh
-```
-
-For ordinary homework and experiments, the recommended approach is still to work inside `MyWork/` rather than editing the instructor-maintained files directly.
-
----
-
-## 6. Using Lean in VS Code
-
-Open the project folder itself:
-
-```bash
-code .
-```
-
-Then open a `.lean` file. Lean continuously checks the file while you type.
-
-The **Lean Infoview** shows the current goal, hypotheses, errors, and output from commands such as `#check` and `#eval`.
-
-If the Infoview is hidden, open the VS Code command palette with `Ctrl + Shift + P` and search for:
-
-```text
-Lean: Show Infoview
-```
-
----
-
-## 7. Useful Lean commands
-
-### `#check`
-
-Ask Lean for the type of an expression:
-
-```lean
-#check 3
-#check Matrix
-#check Matrix.RowEquivalent
-```
-
-Think of it as asking: **What kind of mathematical object is this?**
-
-### `#eval`
-
-Ask Lean to compute a concrete value:
-
-```lean
-#eval 2 + 3
-```
-
-For a matrix, you can evaluate an entry:
-
-```lean
-def A : Matrix (Fin 2) (Fin 3) ℤ :=
-  !![1, 2, 3;
-     4, 5, 6]
-
-#eval A 0 1
-```
-
-The output appears in the Lean Infoview.
-
-### `example`
-
-Use `example` when you want Lean to verify a mathematical statement:
-
-```lean
-example : (2 : ℝ) + 3 = 5 := by
-  norm_num
-```
-
-`#eval` computes; `example` proves.
-
----
-
-## 8. Matrices and row operations
-
-One of the first applications of Lean in this course is Gaussian elimination.
-
-```lean
-import Mathlib
-
-def A : Matrix (Fin 2) (Fin 3) ℝ :=
-  !![1, 2, 3;
-     4, 5, 6]
-```
-
-Mathlib includes an official notion of row equivalence:
-
-```lean
-#check Matrix.RowEquivalent
-#check Matrix.rowEquivalent_swap
-#check Matrix.rowEquivalent_rowScale
-#check Matrix.rowEquivalent_transvection
-```
-
-These correspond to the three elementary row operations:
-
-1. swap two rows;
-2. multiply a row by a nonzero scalar;
-3. add a multiple of one row to another row.
-
-For example:
-
-```lean
-example :
-    Matrix.RowEquivalent A
-      (Matrix.swap ℝ (0 : Fin 2) (1 : Fin 2) * A) := by
-  exact Matrix.rowEquivalent_swap A 0 1
-```
-
-As the course progresses, we will use Lean to connect these formal statements to the linear algebra you already know.
-
----
-
-## 9. Some tactics you will encounter
-
-You do **not** need to memorize all Lean tactics at once.
-
-```text
-rfl         proof by definitional equality
-rw          rewrite using an equality
-simp        simplify expressions
-norm_num    prove explicit numerical arithmetic
-ring        prove polynomial identities
-linarith    solve linear arithmetic consequences
-intro       introduce an assumption
-exact       provide exactly the required proof
-constructor split a goal with multiple components
-```
-
-We will introduce them gradually when they are mathematically useful.
-
----
-
-## 10. Course philosophy
-
-The goal is not to learn Lean syntax for its own sake.
-
-We use Lean because formalization forces us to answer questions such as:
-
-- What exactly is a matrix?
-- What does it mean for two matrices to be row equivalent?
-- Why does an elementary row operation preserve the solution set?
-- What exactly does “linearly independent” mean?
-- Which assumptions are really needed in a proof?
-
-At first, Lean may feel stricter than handwritten mathematics. That strictness is useful: it helps expose hidden assumptions and makes the logical structure of an argument visible.
-
-You should still learn ordinary calculations and handwritten proofs. Lean is an additional language for understanding and verifying mathematics.
-
----
-
-## 11. If something is not working
+#### macOS
 
 First try:
 
 ```bash
-./update_course.sh
+git --version
 ```
 
-or on Windows Git Bash:
+If macOS asks you to install the Command Line Tools, follow the prompt.
+
+You can also install them manually with:
 
 ```bash
-bash update_course.sh
+xcode-select --install
 ```
 
-If VS Code still shows errors:
+Then check again:
 
-1. make sure you opened the **whole repository folder**, not just one `.lean` file;
-2. restart the Lean language server;
-3. run:
+```bash
+git --version
+```
+
+---
+
+### Step 5. Clone the course repository
+
+Open a terminal.
+
+On Windows, I recommend using **Git Bash**.
+
+Run:
+
+```bash
+git clone https://github.com/junwenwaynepeng/LinearAlgebra.git
+cd LinearAlgebra
+```
+
+Do not download the repository as a ZIP file.
+
+Cloning with Git allows you to receive future lecture notes, homework, corrections, and other course updates.
+
+---
+
+### Step 6. Prepare the Lean project
+
+You should now be inside the `LinearAlgebra` directory.
+
+Run:
+
+```bash
+lake exe cache get
+lake build
+```
+
+This is an important part of the initial project setup.
+
+The repository contains:
+
+```text
+lean-toolchain
+```
+
+which specifies the Lean version required by this course.
+
+When you run `lake` inside the project, Elan checks this file. If the required Lean toolchain is not already installed, Elan will install it.
+
+The command
+
+```bash
+lake exe cache get
+```
+
+downloads the precompiled **Mathlib cache** used by the project. This prevents your computer from having to compile most of Mathlib from source.
+
+Then:
 
 ```bash
 lake build
 ```
 
-If the problem remains, send me the error message, file name, and line where the error occurs.
+checks that the entire course project builds correctly.
 
-Do not reinstall everything unless necessary.
+So this step prepares both the correct Lean environment and the Mathlib files needed by the course.
 
 ---
 
-## 12. Repository updates
+### Step 7. Open the project in VS Code
 
-This repository is actively maintained during the course. Lecture files may therefore evolve as we find clearer ways to express the mathematics in Lean.
+From inside the `LinearAlgebra` directory, run:
 
-When an important dependency update is made, the repository will pin the required Lean/mathlib versions so that everyone in the class can work with the same environment.
+```bash
+code .
+```
+
+Alternatively, open VS Code and choose:
+
+```text
+File → Open Folder
+```
+
+then select the whole `LinearAlgebra` directory.
+
+Do **not** open only an individual `.lean` file.
+
+Lean projects depend on files such as:
+
+```text
+lean-toolchain
+lakefile.toml
+lake-manifest.json
+```
+
+so VS Code should open the entire project folder.
+
+When you open a Lean file, the Lean extension will start the Lean language server and display information in the **Infoview**.
+
+---
+
+### Step 8. Check the installation
+
+Inside the terminal, run:
+
+```bash
+elan --version
+lean --version
+lake --version
+git --version
+```
+
+All four commands should print version information.
+
+If Lean works inside VS Code but `lean` or `lake` is not found in the terminal, first close and reopen the terminal or VS Code.
+
+On Linux or macOS, you can also try:
+
+```bash
+source "$HOME/.elan/env"
+```
+
+and then:
+
+```bash
+lake --version
+```
+
+again.
+
+---
+
+### Step 9. Updating the course
+
+You only need to clone and prepare the repository once.
+
+After that, when new course material is released, go to your `LinearAlgebra` directory and run:
+
+```bash
+bash update_course.sh
+```
+
+On Windows, run this inside **Git Bash**.
+
+The update script will:
+
+1. check that you do not have uncommitted changes;
+2. download the newest course files;
+3. update the Lean/Mathlib dependencies if necessary;
+4. download the matching Mathlib cache;
+5. run `lake build` to verify that everything still works.
+
+The updater intentionally stops if you have uncommitted changes. This protects your work from being accidentally overwritten.
+
+For your own homework and experiments, use the `MyWork/` directory rather than modifying instructor-maintained files directly.
+
+---
+
+## Installation overview
+
+```text
+Install VS Code
+      ↓
+Install the Lean 4 VS Code extension
+      ↓
+Install Elan
+      ↓
+Install Git
+      ↓
+Clone LinearAlgebra
+      ↓
+cd LinearAlgebra
+      ↓
+lake exe cache get
+      ↓
+Elan reads lean-toolchain
+and installs the required Lean version if necessary
+      ↓
+Mathlib precompiled files are downloaded
+      ↓
+lake build
+      ↓
+Open the whole project in VS Code
+      ↓
+Start working with Lean
+```
+
+The most important distinction is:
+
+```text
+Lean 4 extension ≠ Lean
+
+Elan manages Lean
+
+The project chooses the Lean version
+
+Lake prepares and builds the project
+```
+
+You normally do not need to manually choose or install a specific Lean version.
