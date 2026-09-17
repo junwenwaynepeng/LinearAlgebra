@@ -73,55 +73,13 @@ You do **not** need to manually choose or download a specific Lean version for t
 
 ---
 
-### Step 1. Install Visual Studio Code
+### Step 1. Manual installation guide
 
-Download and install Visual Studio Code:
+Follow this [instruction](https://lean-lang.org/install/manual/). You will have Lean on your computer.
 
-https://code.visualstudio.com/
+### Step 2. Install Git
 
----
-
-### Step 2. Install the Lean 4 extension
-
-Open VS Code and go to **Extensions**.
-
-Search for:
-
-```text
-Lean 4
-```
-
-Install the official extension published by `leanprover`.
-
-At this point, VS Code knows how to work with Lean files, but the actual Lean toolchain may not yet be installed.
-
----
-
-### Step 3. Install Elan
-
-In VS Code, press:
-
-```text
-Ctrl + Shift + P
-```
-
-Search for:
-
-```text
-Lean 4: Setup: Install Elan
-```
-
-Run the command and follow the instructions.
-
-Elan manages the Lean versions installed on your computer.
-
-You do not need to manually select the Lean version for this course. The course project contains a `lean-toolchain` file that tells Elan which version to use.
-
----
-
-### Step 4. Install Git
-
-This course is distributed through GitHub, so Git is required.
+It is not required to install Git on Windows if you follow the manual installation guide. Nevertheless, This course is distributed through GitHub, so Git is required.
 
 First check whether Git is already installed:
 
@@ -184,7 +142,7 @@ git --version
 
 ---
 
-### Step 5. Clone the course repository
+### Step 3. Clone the course repository
 
 Open a terminal.
 
@@ -203,7 +161,7 @@ Cloning with Git allows you to receive future lecture notes, homework, correctio
 
 ---
 
-### Step 6. Prepare the Lean project
+### Step 4. Download Mathlib: the main mathematical library for Lean
 
 You should now be inside the `LinearAlgebra` directory.
 
@@ -224,7 +182,7 @@ lean-toolchain
 
 which specifies the Lean version required by this course.
 
-When you run `lake` inside the project, Elan checks this file. If the required Lean toolchain is not already installed, Elan will install it.
+When you run `lake` inside the project, `Elan` checks this file. If the required Lean toolchain is not already installed, `Elan` will install it.
 
 The command
 
@@ -246,7 +204,40 @@ So this step prepares both the correct Lean environment and the Mathlib files ne
 
 ---
 
-### Step 7. Open the project in VS Code
+### Step 5. Check the installation
+
+Inside the terminal, run:
+
+```bash
+elan --version
+lean --version
+lake --version
+git --version
+```
+
+All four commands should print version information.
+
+If Lean works inside VS Code but `lean` or `lake` is not found in the terminal, first close and reopen the terminal or VS Code.
+
+On Linux, you can also try:
+
+```bash
+source "$HOME/.elan/env"
+```
+
+On MacOS, you can try: `source ~/.profile` or `source ~/.bash_profile`
+
+and then:
+
+```bash
+lake --version
+```
+
+again.
+
+---
+
+### Step 6. Open the project in VS Code
 
 From inside the `LinearAlgebra` directory, run:
 
@@ -278,42 +269,11 @@ When you open a Lean file, the Lean extension will start the Lean language serve
 
 ---
 
-### Step 8. Check the installation
-
-Inside the terminal, run:
-
-```bash
-elan --version
-lean --version
-lake --version
-git --version
-```
-
-All four commands should print version information.
-
-If Lean works inside VS Code but `lean` or `lake` is not found in the terminal, first close and reopen the terminal or VS Code.
-
-On Linux or macOS, you can also try:
-
-```bash
-source "$HOME/.elan/env"
-```
-
-and then:
-
-```bash
-lake --version
-```
-
-again.
-
----
-
-### Step 9. Updating the course
+### Step 7. Updating the course
 
 You only need to clone and prepare the repository once.
 
-After that, when new course material is released, go to your `LinearAlgebra` directory and run:
+After that, when new course material is released, go to your LinearAlgebra directory and run:
 
 ```bash
 bash update_course.sh
@@ -327,53 +287,21 @@ The update script will:
 2. download the newest course files;
 3. update the Lean/Mathlib dependencies if necessary;
 4. download the matching Mathlib cache;
-5. run `lake build` to verify that everything still works.
+5. run lake build to verify that everything still works.
 
 The updater intentionally stops if you have uncommitted changes. This protects your work from being accidentally overwritten.
 
-For your own homework and experiments, use the `MyWork/` directory rather than modifying instructor-maintained files directly.
+If **VS Code was open** while you ran the update, restart the Lean language server afterward so that VS Code uses the updated Lean toolchain and project dependencies.
 
----
+Open the Command Palette:
 
-## Installation overview
+* Windows/Linux: press Ctrl + Shift + P
+* macOS: press Cmd + Shift + P
 
-```text
-Install VS Code
-      ↓
-Install the Lean 4 VS Code extension
-      ↓
-Install Elan
-      ↓
-Install Git
-      ↓
-Clone LinearAlgebra
-      ↓
-cd LinearAlgebra
-      ↓
-lake exe cache get
-      ↓
-Elan reads lean-toolchain
-and installs the required Lean version if necessary
-      ↓
-Mathlib precompiled files are downloaded
-      ↓
-lake build
-      ↓
-Open the whole project in VS Code
-      ↓
-Start working with Lean
-```
+Then search for:
 
-The most important distinction is:
+Lean 4: Restart Server
 
-```text
-Lean 4 extension ≠ Lean
+and press `Enter`.
 
-Elan manages Lean
-
-The project chooses the Lean version
-
-Lake prepares and builds the project
-```
-
-You normally do not need to manually choose or install a specific Lean version.
+For your own homework and experiments, use the MyWork/ directory rather than modifying instructor-maintained files directly.
