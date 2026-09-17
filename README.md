@@ -73,9 +73,11 @@ You do **not** need to manually choose or download a specific Lean version for t
 
 ---
 
-### Step 1. Manual installation guide
+### Step 1. Install Lean
 
-Follow this [instruction](https://lean-lang.org/install/manual/). You will have Lean on your computer.
+Follow the official [manual installation guide](https://lean-lang.org/install/manual/). You will have Lean on your computer.
+
+After completing the guide, you should have VS Code, the Lean 4 extension, Elan, and a working Lean installation.
 
 ---
 
@@ -161,7 +163,7 @@ Cloning with Git allows you to receive future lecture notes, homework, correctio
 
 ---
 
-### Step 4. Download Mathlib: the main mathematical library for Lean
+### Step 4. Download Mathlib cache: the main mathematical library for Lean
 
 You should now be inside the `LinearAlgebra` directory.
 
