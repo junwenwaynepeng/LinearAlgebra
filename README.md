@@ -65,10 +65,19 @@ This prevents future course updates from conflicting with your work.
 
 The recommended setup is:
 
-- Git
-- Visual Studio Code
-- the official **Lean 4** extension for VS Code
-- `elan`, the Lean version manager
+1. Install Git
+2. Install Visual Studio Code
+3. the official **Lean 4** extension for VS Code
+4. `elan`, the Lean version manager (Instruction)[https://lean-lang.org/install/manual/?utm_source=chatgpt.com]
+4. Make sure Elan is installed
+5. Clone the course repository
+6. Open the repository in VS Code
+
+Jump to your OS [Windows](#windows) [Ununtu/Linux](#ubuntu--linux) [Mac](#macos)
+
+**You do not need to install a specific version of Lean manually.**
+We use `elan`, the Lean version manager. This repository contains a `lean-toolchain` file that tells `elan` which version of Lean the course requires. When the course Lean version changes, `elan` will automatically use the version specified by the repository.
+
 
 ### Windows
 
