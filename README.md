@@ -33,7 +33,7 @@ LinearAlgebra/
 
 These are the Lean files used in class.
 
-You are encouraged to read them, run them in VS Code, change small pieces, and experiment with them.
+You are encouraged to read them, run them in VS Code. **Do not** save any change you make in this folder.
 
 ### `LinearAlgebra/Homework/`
 
