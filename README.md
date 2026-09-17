@@ -77,9 +77,7 @@ You do **not** need to manually choose or download a specific Lean version for t
 
 Follow this [instruction](https://lean-lang.org/install/manual/). You will have Lean on your computer.
 
-### Step 2. Install Git
-
-It is not required to install Git on Windows if you follow the manual installation guide. Nevertheless, This course is distributed through GitHub, so Git is required.
+### Step 2. Check that Git is installed
 
 First check whether Git is already installed:
 
@@ -87,7 +85,7 @@ First check whether Git is already installed:
 git --version
 ```
 
-If this prints a version number, continue to Step 5.
+If this prints a version number, continue to Step 3.
 
 #### Windows
 
