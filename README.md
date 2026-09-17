@@ -61,7 +61,7 @@ This prevents future course updates from conflicting with your work.
 
 ---
 
-## Install Lean for This Course
+## 2. Install Lean for This Course
 
 This course uses Lean through Visual Studio Code. Before installing anything, it is helpful to distinguish three different components:
 
