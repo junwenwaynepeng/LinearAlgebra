@@ -79,35 +79,106 @@ theorem rref_unique
   · have hdiff0 : R₁.col 0 ≠ R₂.col 0 := by
       simpa [hj₀] using hj₀_diff
     have hcol : (R₁.col 0 = 0 ∧ R₂.col 0 ≠ 0) ∨ (R₁.col 0 ≠ 0 ∧ R₂.col 0 = 0) := by
-      aesop
-    aesop
-  · aesop
-          simpa [k12] using k12'
-      have hker₂ : R₂.mulVecLin.ker = R₁.mulVecLin.ker := by
-        rw [← hm₁]
-        exact hker
-      exact hx.2 (hker₂.symm ▸ hx.1)
-    · obtain ⟨k21, k22⟩ := k2
-      let x : Fin n → ℝ := Pi.single (0 : Fin n) 1
-      have hx : x ∈ R₂.mulVecLin.ker ∧ x ∉ R₁.mulVecLin.ker := by
-        constructor
-        · simp [x]
-          ext k
-          change R₂ k 0 = 0
-          by_cases hk : k = 0
-          · subst k; exact k21
-          · have kpos : (0 : Fin m) < k := by exact (Fin.pos_iff_ne_zero' k).2 hk
-            apply hr₂.isRowEchelon kpos
-            intro j₁ hj₁
-            simp at hj₁
-        · simp [x]
-          intro hcol
-          have k22' : R₁ 0 0 = 0 := by
-            simpa using congrFun hcol 0
-          simpa [k22] using k22'
-      have hker₂ : R₂.mulVecLin.ker = R₁.mulVecLin.ker := by
-        rw [hm₁.symm]
-        exact hker
-      exact hx.2 (hker₂ ▸ hx.1)
-  · ext i j
--/
+      by_cases hA : R₁.col 0 = 0
+      · by_cases hB : R₂.col 0 = 0
+        · exact False.elim (hdiff0 (hA.trans hB.symm))
+        · exact Or.inl ⟨hA, hB⟩
+      · by_cases hB : R₂.col 0 = 0
+        · exact Or.inr ⟨hA, hB⟩
+        · have hA1 : R₁.col 0 = Pi.single (0 : Fin m) (1 : ℝ) := by
+            ext k
+            by_cases hk : k = 0
+            · subst hk
+              have h00 : R₁ 0 0 ≠ 0 := by
+                intro hzero
+                apply hA
+                ext k
+                by_cases hk' : k = 0
+                · subst hk'
+                  simpa using hzero
+                · have hkpos : (0 : Fin m) < k := (Fin.pos_iff_ne_zero' k).2 hk'
+                  have hkzero : R₁ k 0 = 0 := by
+                    exact hr₁.isRowEchelon (i₁ := 0) (i₂ := k) (j₂ := 0) hkpos (by
+                      intro j hj
+                      exact (Fin.not_lt_zero j hj).elim)
+                  simpa [hk'] using hkzero
+              have hlead : R₁.IsLeadingEntry 0 0 := by
+                refine ⟨?_, h00⟩
+                intro j hj
+                exact (Fin.not_lt_zero j hj).elim
+              simpa [hr₁.eq_one hlead]
+            · have hk0 : k ≠ 0 := hk
+              have hkzero : R₁ k 0 = 0 := by
+                have hkpos : (0 : Fin m) < k := (Fin.pos_iff_ne_zero' k).2 hk0
+                exact hr₁.isRowEchelon (i₁ := 0) (i₂ := k) (j₂ := 0) hkpos (by
+                  intro j hj
+                  exact (Fin.not_lt_zero j hj).elim)
+              simp [Pi.single, hk0, hkzero]
+          have hB1 : R₂.col 0 = Pi.single (0 : Fin m) (1 : ℝ) := by
+            ext k
+            by_cases hk : k = 0
+            · subst hk
+              have h00 : R₂ 0 0 ≠ 0 := by
+                intro hzero
+                apply hB
+                ext k
+                by_cases hk' : k = 0
+                · subst hk'
+                  simpa using hzero
+                · have hkpos : (0 : Fin m) < k := (Fin.pos_iff_ne_zero' k).2 hk'
+                  have hkzero : R₂ k 0 = 0 := by
+                    exact hr₂.isRowEchelon (i₁ := 0) (i₂ := k) (j₂ := 0) hkpos (by
+                      intro j hj
+                      exact (Fin.not_lt_zero j hj).elim)
+                  simpa [hk'] using hkzero
+              have hlead : R₂.IsLeadingEntry 0 0 := by
+                refine ⟨?_, h00⟩
+                intro j hj
+                exact (Fin.not_lt_zero j hj).elim
+              simpa [hr₂.eq_one hlead]
+            · have hk0 : k ≠ 0 := hk
+              have hkzero : R₂ k 0 = 0 := by
+                have hkpos : (0 : Fin m) < k := (Fin.pos_iff_ne_zero' k).2 hk0
+                exact hr₂.isRowEchelon (i₁ := 0) (i₂ := k) (j₂ := 0) hkpos (by
+                  intro j hj
+                  exact (Fin.not_lt_zero j hj).elim)
+              simp [Pi.single, hk0, hkzero]
+          exact False.elim (hdiff0 (hA1.trans hB1.symm))
+    rcases hcol with hR1zero | hR1nz
+    · rcases hR1zero with ⟨hR1zero, hR2nz⟩
+      have hker' : R₂.mulVecLin.ker = R₁.mulVecLin.ker := by
+        simpa [hm₁] using hker
+      let e : Fin n → ℝ := Pi.single (0 : Fin n) (1 : ℝ)
+      have hmem₁ : e ∈ R₁.mulVecLin.ker := by
+        rw [LinearMap.mem_ker, Matrix.mulVecLin_apply]
+        ext i
+        simpa [e, Matrix.mulVec] using congrFun hR1zero i
+      have hmem₂ : e ∉ R₂.mulVecLin.ker := by
+        rw [LinearMap.mem_ker, Matrix.mulVecLin_apply]
+        intro hzero
+        apply hR2nz
+        ext i
+        simpa [e, Matrix.mulVec] using congrFun hzero i
+      have hmem₂' : e ∈ R₂.mulVecLin.ker := by
+        rw [hker']
+        exact hmem₁
+      exact hmem₂ hmem₂'
+    · rcases hR1nz with ⟨hR1nz, hR2zero⟩
+      have hker' : R₂.mulVecLin.ker = R₁.mulVecLin.ker := by
+        simpa [hm₁] using hker
+      let e : Fin n → ℝ := Pi.single (0 : Fin n) (1 : ℝ)
+      have hmem₁ : e ∈ R₂.mulVecLin.ker := by
+        rw [LinearMap.mem_ker, Matrix.mulVecLin_apply]
+        ext i
+        simpa [e, Matrix.mulVec] using congrFun hR2zero i
+      have hmem₂ : e ∉ R₁.mulVecLin.ker := by
+        rw [LinearMap.mem_ker, Matrix.mulVecLin_apply]
+        intro hzero
+        apply hR1nz
+        ext i
+        simpa [e, Matrix.mulVec] using congrFun hzero i
+      have hmem₂' : e ∈ R₁.mulVecLin.ker := by
+        rw [← hker']
+        exact hmem₁
+      exact hmem₂ hmem₂'
+  ·
