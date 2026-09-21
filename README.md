@@ -75,9 +75,21 @@ You do **not** need to manually choose or download a specific Lean version for t
 
 ### Step 1. Install Lean
 
-Follow the official [manual installation guide](https://lean-lang.org/install/manual/). You will have Lean on your computer.
+#### Recommended
+
+Follow the official [manual installation guide](https://lean-lang.org/install/manual/). This will install Lean on your computer.
 
 After completing the guide, you should have VS Code, the Lean 4 extension, Elan, and a working Lean installation.
+
+Once everything is set up, continue to [Step 3](#step 3. Clonethe course repository).
+
+#### For Beginners
+
+Follow the official [installation guide](https://lean-lang.org/install/).
+
+After completing the three steps, open VS Code and press `Ctrl + Shift + P` (`Cmd + Shift + P` on macOS). Search for `Lean 4: Install Elan` and follow the instructions.
+
+After Elan is installed, continue to [Step 2](Step 2. Check that Git is installed).
 
 ---
 
@@ -160,6 +172,8 @@ cd LinearAlgebra
 Do not download the repository as a ZIP file.
 
 Cloning with Git allows you to receive future lecture notes, homework, corrections, and other course updates.
+
+If your terminal says `git: command not found`, please return to Step 2. 
 
 ---
 
