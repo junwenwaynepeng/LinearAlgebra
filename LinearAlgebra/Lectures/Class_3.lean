@@ -2,7 +2,7 @@ import Mathlib
 
 open Matrix
 open scoped BigOperators
-
+open scoped Matrix
 
 example (x y : ℝ) (h : x = y) :
     x^2 = y^2 := by
@@ -143,3 +143,70 @@ theorem inverse_unique
     _ = C * (A * B) := by exact matrix_assoc_basic C A B
     _ = C * 1 := by rw [hAB]
     _ = C := by rw [Matrix.mul_one]
+
+
+def MyTrans
+    {m n α : Type}(A : Matrix m n α) : Matrix n m α :=
+  fun i j => A j i
+
+def AA : Matrix (Fin 2) (Fin 3) ℚ :=
+  !![
+    1, 2, 3;
+    4, 5, 6
+  ]
+
+#eval MyTrans AA
+
+example {m n : Type} (A : Matrix m n ℚ) : MyTrans A = Aᵀ :=by
+  rfl
+
+example {m n : Type} (A : Matrix m n ℚ) : Aᵀᵀ = A := by
+  rfl
+
+example {m n k : ℕ} (A : Matrix (Fin m) (Fin n) ℚ) (B : Matrix (Fin n) (Fin k) ℚ) :
+    (A * B)ᵀ = Bᵀ * Aᵀ := by
+  ext i j
+  simp [Matrix.mul_apply]
+  simp [mul_comm]
+  --simp [Matrix.mul_apply, Finset.sum_comm, mul_comm]
+
+example {m n k l : ℕ}
+    (A : Matrix (Fin m) (Fin n) ℚ)
+    (B : Matrix (Fin n) (Fin k) ℚ)
+    (C : Matrix (Fin k) (Fin l) ℚ) :
+    (A * B * C)ᵀ = Cᵀ * Bᵀ * Aᵀ := by
+  ext i j
+  simp only[transpose_apply, mul_apply]
+  simp only [Finset.sum_mul]
+  rw [Finset.sum_comm]
+  apply Finset.sum_congr rfl
+  intro x hx
+  apply Finset.sum_congr rfl
+  intro x_1 hx_1
+  ring
+
+theorem solution_unique (n : ℕ) (A : Matrix (Fin n) (Fin n) ℂ) (hA : IsInvertible A) (b : Fin n → ℂ) :
+    ∃! x : Fin n → ℂ, A *ᵥ x = b := by
+  rcases hA with ⟨B, hAB, hBA⟩
+  by_cases hb : b = (0 : Fin n → ℂ)
+  · subst b
+    refine ⟨0, ?_, ?_⟩
+    · simp
+    · intro y hy
+      calc
+        y = (1 :  Matrix (Fin n) (Fin n) ℂ) *ᵥ y := by rw [Matrix.one_mulVec]
+        _ = (B * A) *ᵥ y := by rw [hBA]
+        _ = B *ᵥ (A *ᵥ y) := by rw [mulVec_mulVec]
+        _ = B *ᵥ 0 := by  rw [hy]
+        _ = 0 := by simp
+  · refine ⟨B *ᵥ b, ?_, ?_⟩
+    · calc
+      A *ᵥ (B*ᵥ b) = (A * B) *ᵥ b := by rw [mulVec_mulVec]
+      _ = (1 : Matrix (Fin n) (Fin n) ℂ) *ᵥ b := by rw [hAB]
+      _ = b := by rw [Matrix.one_mulVec]
+    · intro y hy
+      calc
+      y = (1 :  Matrix (Fin n) (Fin n) ℂ) *ᵥ y := by rw [Matrix.one_mulVec]
+      _ = (B * A) *ᵥ y := by rw [hBA]
+      _ = B *ᵥ (A *ᵥ y) := by rw [mulVec_mulVec]
+      _ = B *ᵥ b := by rw [hy]

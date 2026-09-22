@@ -290,6 +290,8 @@ def AA : Matrix (Fin 3) (Fin 3) ℚ :=
      4, 5, 6;
      7, 8, 9]
 
+#check AA
+
 #eval showMatrix (rowScale' AA 1 2)
 #eval showMatrix (rowScale' AA 1 2)
 def BB : Matrix (Fin 3) (Fin 3) ℚ :=
