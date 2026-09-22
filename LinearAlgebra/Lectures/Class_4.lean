@@ -40,8 +40,8 @@ theorem rref_unique
   obtain ⟨i, hi⟩ := Function.ne_iff.mp this
   obtain ⟨j, hij⟩ := Function.ne_iff.mp hi
 
-  letI mneZero : NeZero m := i.neZero
-  letI nneZero : NeZero n := j.neZero
+  let mneZero : NeZero m := i.neZero
+  let nneZero : NeZero n := j.neZero
 
   have hj' : R₁.col j ≠ R₂.col j := by
     intro hcol
@@ -106,7 +106,7 @@ theorem rref_unique
                 refine ⟨?_, h00⟩
                 intro j hj
                 exact (Fin.not_lt_zero j hj).elim
-              simpa [hr₁.eq_one hlead]
+              simp [hr₁.eq_one hlead]
             · have hk0 : k ≠ 0 := hk
               have hkzero : R₁ k 0 = 0 := by
                 have hkpos : (0 : Fin m) < k := (Fin.pos_iff_ne_zero' k).2 hk0
@@ -135,7 +135,7 @@ theorem rref_unique
                 refine ⟨?_, h00⟩
                 intro j hj
                 exact (Fin.not_lt_zero j hj).elim
-              simpa [hr₂.eq_one hlead]
+              simp [hr₂.eq_one hlead]
             · have hk0 : k ≠ 0 := hk
               have hkzero : R₂ k 0 = 0 := by
                 have hkpos : (0 : Fin m) < k := (Fin.pos_iff_ne_zero' k).2 hk0
@@ -181,52 +181,22 @@ theorem rref_unique
         rw [← hker']
         exact hmem₁
       exact hmem₂ hmem₂'
-  ·
-    have hj0pos : 0 < j₀.1 := by
+  · have hj0pos : 0 < j₀ := by
       refine Nat.pos_of_ne_zero ?_
       intro h0
       apply hj₀
       apply Fin.ext
       exact h0
-    let z0 : Fin j₀.1 := ⟨0, hj0pos⟩
-    let R₁' : Matrix (Fin m) (Fin j₀.1) ℝ :=
-      fun i k => R₁ i ⟨k.1, lt_trans k.2 j₀.2⟩
-    let R₂' : Matrix (Fin m) (Fin j₀.1) ℝ :=
-      fun i k => R₂ i ⟨k.1, lt_trans k.2 j₀.2⟩
-    have hprefix : ∀ i : Fin m, ∀ k : Fin j₀.1, R₁' i k = R₂' i k := by
-      intro i k
-      change R₁ i ⟨k.1, lt_trans k.2 j₀.2⟩ = R₂ i ⟨k.1, lt_trans k.2 j₀.2⟩
-      exact hbefore ⟨k.1, lt_trans k.2 j₀.2⟩ k.2
-    have hR1'_eq_R2' : R₁' = R₂' := by
-      ext i k
-      exact hprefix i k
-    let v : Fin j₀.1 → ℝ := fun k => if k = z0 then 1 else 0
-    have hv₁ : R₁' *ᵥ v = 0 := by
-      ext i
-      simp [Matrix.mulVec, R₁', v, z0, hprefix]
-    have hv₂ : R₂' *ᵥ v ≠ 0 := by
+    let z0 : Fin (j₀ + 1) := Fin.last j₀
+    let R₁' : Matrix (Fin m) (Fin (j₀ + 1)) ℝ :=
+      fun i k => R₁ i ⟨k, lt_of_lt_of_le k.2 (Nat.succ_le_of_lt j₀.2)⟩
+    let R₂' : Matrix (Fin m) (Fin (j₀ + 1)) ℝ :=
+      fun i k => R₂ i ⟨k, lt_of_lt_of_le k.2 (Nat.succ_le_of_lt j₀.2)⟩
+    have hlast : R₁'.col z0 ≠ R₂'.col z0 := by
       intro h
-      have htrunc : ∀ k : Fin j₀.1, R₁' i k = R₂' i k := hprefix i
-      -- The remaining contradiction is to evaluate at the first differing column.
-      -- The actual witness construction is still the proof to finish.
-      simp [Matrix.mulVec, R₂', v, z0, htrunc] at h
-    let w : Fin n → ℝ := fun k =>
-      if hk : (k.1 : ℕ) < j₀.1 then v ⟨k.1, hk⟩ else 0
-    have hw₁ : R₁.mulVec w = 0 := by
+      apply hj₀_diff
       ext i
-      -- We are using the same argument as above: the earlier columns agree, and the extension
-      -- is zero on all columns after the truncated range.
-      simp [Matrix.mulVec, w, v, z0, hprefix]
-    have hw₂ : R₂.mulVec w ≠ 0 := by
-      intro h
-      have hcol : R₂.mulVec w j₀ = 0 := by simpa [Matrix.mulVec] using congrArg (fun f => f j₀) h
-      -- This is the contradiction coming from the first differing column `j₀`.
-      exact hj₀_diff (by
-        ext k
-        by_cases hk : k = 0
-        · subst hk
-          simpa [Matrix.mulVec, w, v, z0] using hcol
-        · sorry)
-    have hker' : R₂.mulVecLin.ker = R₁.mulVecLin.ker := by
-      simpa [hm₁] using hker
-    exact (hw₂ <| by simpa [hker'] using hw₁)
+      dsimp [R₁', R₂', z0] at h
+      have hi := congrFun h i
+      change R₁ i (⟨j₀, _⟩ : Fin n) = R₂ i (⟨j₀, _⟩ : Fin n) at hi
+      simpa using hi
