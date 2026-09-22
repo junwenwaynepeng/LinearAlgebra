@@ -38,7 +38,8 @@ See the repository `README.md` for platform-specific installation instructions.
 
 ### Clone the course repository
 
-Run these commands in a terminal:
+Run these commands in a terminal from your home directory (run `cd ~`)
+or any folder where you want to keep this project:
 
 ```text
 git clone https://github.com/junwenwaynepeng/LinearAlgebra.git
@@ -52,13 +53,27 @@ Clone the repository only once.
 
 ### Updating the course
 
-For later updates, run:
+Make sure you have saved your work by runing
+
+```text
+git add .
+git commit -m "save my changes"
+```
+
+On Linux or macOS, if this is your first time updating the course repository, run:
+
+```text
+chmod +x update_course.sh
+./update_course.sh
+```
+
+For later updates, , you only need to run:
 
 ```text
 ./update_course.sh
 ```
 
-On Windows with Git Bash:
+On Windows with Git Bash, or Linux/MacOSif you have not run `chmod +x`, run:
 
 ```text
 bash update_course.sh
@@ -78,12 +93,6 @@ Put your own work in:
 ```text
 MyWork/
 ```
-
-If Lean does not recognize a newly updated library file, use this order:
-
-1. Save the library file.
-2. Run `lake build`.
-3. Restart the Lean server in VS Code.
 -/
 
 
@@ -272,9 +281,8 @@ and proving that each step is valid.
 
 `row_scale A => A₁, i, (c : ℝ)` verifies that A₁ is row equivalent to A by scaling row i by c.
 
-`row_add A => A₁, i, j, (c : ℝ)` verifies that A₁ is row equivalent to A by performing the row operation
-R_i \leftarrow R_i + cR_j.
-
+`row_add A => A₁, i, j, (c : ℝ)` verifies that A₁ is row equivalent to A by performing
+the row operation R_i \leftarrow R_i + cR_j.
 -/
 
 def AA : Matrix (Fin 3) (Fin 3) ℚ :=
@@ -325,19 +333,15 @@ example : Matrix.RowEquivalent A B := by
   -- R₁ ↔ R₂
   have h₁ : Matrix.RowEquivalent A A₁ := by
     row_swap A => A₁, 0, 1
-
   -- R₂ ← (1/2)R₂
   have h₂ : Matrix.RowEquivalent A₁ A₂ := by
     row_scale A₁ => A₂, 1, (1 / 2 : ℝ)
-
   -- R₃ ← (1/3)R₃
   have h₃ : Matrix.RowEquivalent A₂ A₃ := by
     row_scale A₂ => A₃, 2, (1 / 3 : ℝ)
-
   -- R₁ ← R₁ - R₃
   have h₄ : Matrix.RowEquivalent A₃ B := by
     row_add A₃ => B, 0, 2, (-1 : ℝ)
-
   -- Row equivalence is transitive.
   -- exact h₁.trans (h₂.trans (h₃.trans h₄))
   exact h₁.trans <| h₂.trans <| h₃.trans <| h₄

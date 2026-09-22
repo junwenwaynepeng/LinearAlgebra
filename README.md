@@ -287,15 +287,31 @@ When you open a Lean file, the Lean extension will start the Lean language serve
 
 ### Step 7. Updating the course
 
-You only need to clone and prepare the repository once.
+Make sure you have saved your work by runing
 
-After that, when new course material is released, go to your LinearAlgebra directory and run:
+```bash
+git add .
+git commit -m "save my changes"
+```
+
+On Linux or macOS, if this is your first time updating the course repository, run:
+
+```bash
+chmod +x update_course.sh
+./update_course.sh
+```
+
+For later updates, , you only need to run:
+
+```bash
+./update_course.sh
+```
+
+On Windows with Git Bash, or Linux/MacOSif you have not run `chmod +x`, run:
 
 ```bash
 bash update_course.sh
 ```
-
-On Windows, run this inside **Git Bash**.
 
 The update script will:
 

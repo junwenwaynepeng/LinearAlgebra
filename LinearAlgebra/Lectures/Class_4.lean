@@ -200,3 +200,4 @@ theorem rref_unique
       have hi := congrFun h i
       change R₁ i (⟨j₀, _⟩ : Fin n) = R₂ i (⟨j₀, _⟩ : Fin n) at hi
       simpa using hi
+    have nontrivil_vec_ker : ∃ x : vec , x∈ R₁'.mulVecLin.ker or x ∈ R₂'.mulVecLin.ker
