@@ -6,20 +6,19 @@ structure VectorSpaceAxioms
     (K V : Type*) [Field K] [Add V] [Zero V] [Neg V] [SMul K V] : Prop
 where
   -- Vector addition
-  add_assoc : ∀ u v w : V, (u + v) + w = u + (v + w)
   add_comm : ∀ u v : V, u + v = v + u
-  zero_add : ∀ v : V, 0 + v = v
+  add_assoc : ∀ u v w : V, (u + v) + w = u + (v + w)
   add_zero : ∀ v : V, v + 0 = v
   neg_add_cancel : ∀ v : V, -v + v = 0
 
   -- Scalar multiplication
+  one_smul : ∀ v : V, (1 : K) • v = v
+  mul_smul : ∀ (a b : K) (v : V),
+    (a * b) • v = a • (b • v)
   smul_add : ∀ (a : K) (u v : V),
     a • (u + v) = a • u + a • v
   add_smul : ∀ (a b : K) (v : V),
     (a + b) • v = a • v + b • v
-  mul_smul : ∀ (a b : K) (v : V),
-    (a * b) • v = a • (b • v)
-  one_smul : ∀ v : V, (1 : K) • v = v
 
 
 -- The set of ordered triples of real numbers.
@@ -41,71 +40,6 @@ def vectorNeg (v : V) : V :=
 
 -- Step 2: Verify the vector space axioms.
 
-example (u v w : V) :
-    vectorAdd (vectorAdd u v) w =
-      vectorAdd u (vectorAdd v w) := by
-  unfold vectorAdd
-  simp
-  constructor
-  · ring
-  · constructor
-    · ring
-    · ring
-
-example (u v : V) :
-    vectorAdd u v = vectorAdd v u := by
-  unfold vectorAdd
-  simp
-  constructor
-  · ring
-  · constructor <;> ring
-
-example (v : V) :
-    vectorAdd v zeroVector = v := by
-  unfold vectorAdd
-  unfold zeroVector
-  simp
-
-example (v : V) :
-    vectorAdd v (vectorNeg v) = zeroVector := by
-  unfold vectorAdd
-  unfold vectorNeg
-  simp only [add_neg_cancel]
-  unfold zeroVector
-  rfl
-
-example (a : ℝ) (u v : V) :
-    scalarMul a (vectorAdd u v) =
-      vectorAdd (scalarMul a u) (scalarMul a v) := by
-  unfold scalarMul; unfold vectorAdd
-  simp
-  constructor
-  · ring
-  · constructor <;> ring
-
-example (a b : ℝ) (v : V) :
-    scalarMul (a + b) v =
-      vectorAdd (scalarMul a v) (scalarMul b v) := by
-  unfold scalarMul; unfold vectorAdd
-  simp
-  constructor
-  · ring
-  · constructor <;> ring
-
-example (a b : ℝ) (v : V) :
-    scalarMul (a * b) v =
-      scalarMul a (scalarMul b v) := by
-  unfold scalarMul
-  simp
-  constructor
-  · ring
-  · constructor <;> ring
-
-example (v : V) :
-    scalarMul 1 v = v := by
-  unfold scalarMul
-  simp
-
 local instance : Add V := ⟨vectorAdd⟩
 local instance : Zero V := ⟨zeroVector⟩
 local instance : Neg V := ⟨vectorNeg⟩
@@ -125,22 +59,26 @@ theorem V_is_vector_space : VectorSpaceAxioms ℝ V where
 
   zero_add := by
     intro v
-    change vectorAdd zeroVector v = zeroVector
+    change vectorAdd zeroVector v = v
     unfold vectorAdd zeroVector
     simp
 
   add_zero := by
     intro v
+    change vectorAdd v zeroVector = v
     unfold vectorAdd zeroVector
     simp
 
   neg_add_cancel := by
     intro v
+    change vectorAdd (vectorNeg v) v = zeroVector
     unfold vectorAdd vectorNeg zeroVector
     simp
 
   smul_add := by
     intro a u v
+    change scalarMul a (vectorAdd u v) =
+      vectorAdd (scalarMul a u) (scalarMul a v)
     unfold scalarMul vectorAdd
     simp
     constructor
@@ -149,6 +87,7 @@ theorem V_is_vector_space : VectorSpaceAxioms ℝ V where
 
   add_smul := by
     intro a b v
+    change scalarMul (a + b) v = vectorAdd (scalarMul a v) (scalarMul b v)
     unfold scalarMul vectorAdd
     simp
     constructor
@@ -157,6 +96,8 @@ theorem V_is_vector_space : VectorSpaceAxioms ℝ V where
 
   mul_smul := by
     intro a b v
+    change scalarMul (a * b) v =
+      scalarMul a (scalarMul b v)
     unfold scalarMul
     simp
     constructor
@@ -165,5 +106,6 @@ theorem V_is_vector_space : VectorSpaceAxioms ℝ V where
 
   one_smul := by
     intro v
+    change scalarMul 1 v = v
     unfold scalarMul
     simp
