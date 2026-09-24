@@ -1,5 +1,5 @@
 import Mathlib
-import LinearAlgebra.CourseTools
+--import LinearAlgebra.CourseTools
 open scoped BigOperators
 
 /-!
@@ -215,7 +215,7 @@ example (P Q : Prop) : P ∧ Q → P := by
   exact p
 
 example (P Q : Prop) : P ∧ Q → P := by
-  rintro ⟨p, q⟩
+  intro ⟨p, q⟩
   exact p
 
 
@@ -311,28 +311,38 @@ example : ∃ x : ℝ, x ^ 2 = 4 := by
 /-!
 ### Extracting an existential witness
 
-`rcases` separates the witness from the proof that it has the required
+`rcases` or `obtain` separates the witness from the proof that it has the required
 property.
 -/
 
 example (h : ∃ x : ℝ, x = 3) : True := by
-  rcases h with ⟨x, hx⟩
+  --rcases h with ⟨x, hx⟩
+  obtain ⟨x, hx⟩ := h
   trivial
 
 
 /-!
-If the existential statement is introduced as an assumption, `rintro` can
+If the existential statement is introduced as an assumption, `intro ⟨?_,?_ ⟩ ` can
 introduce and decompose it immediately.
 -/
 
 example : (∃ x : ℝ, x = 3) → True := by
-  rintro ⟨x, hx⟩
+  intro ⟨x, hx⟩
   trivial
 
-
-/-!
+/-
 ## 8. Excluded middle and `by_cases`
+
+The law of excluded middle says that for any proposition `P`,
+
+    P ∨ ¬P.
+
+Lean provides this theorem as `Classical.em`.
 -/
+
+example (P : Prop) : P ∨ ¬P := by
+  --classical
+  exact Classical.em P
 
 example (P : Prop) : P ∨ ¬P := by
   by_cases h : P
@@ -340,6 +350,30 @@ example (P : Prop) : P ∨ ¬P := by
     exact h
   · right
     exact h
+
+/-In-class-practicer-/
+
+example (P Q : Prop) (h₁ : P → Q) (h₂ : ¬P → Q) : Q := by
+  sorry
+
+/-!
+### `classical`
+
+Lean is constructive by default.
+
+Writing
+
+    classical
+
+allows Lean to use classical reasoning and classical decidability.
+
+For this course, you mainly need to recognize this line when it appears
+in a proof.
+-/
+
+example (P : Prop) : P ∨ ¬P := by
+  --classical
+  exact Classical.em P
 
 
 /-!
@@ -362,6 +396,7 @@ in several equivalent styles.
 ### Version 1: unfold `Not`, then use `apply`
 -/
 
+
 example (P Q : Prop) : (P → Q) → (¬Q → ¬P) := by
   unfold Not
   intro h1 h2 p
@@ -370,7 +405,6 @@ example (P Q : Prop) : (P → Q) → (¬Q → ¬P) := by
 
   -- The last two lines can also be replaced by:
   -- exact h2 (h1 p)
-
 
 /-!
 ### Version 2: introduce an intermediate fact
@@ -391,7 +425,139 @@ example (P Q : Prop) (h : P → Q) : ¬Q → ¬P := by
   apply h1
   exact h p
 
+/-!
+### version 4: Contrapose
+The above direction is constructive, and the reverse is classical reasoning
+-/
 
+example (P Q : Prop) (h : P → Q) : ¬Q → ¬P := by
+  contrapose
+  exact h
+
+/-
+### Summary
+-/
+example (P Q : Prop) :
+    (P → Q) ↔ (¬Q → ¬P) := by
+  constructor
+  · intro h NotQ p
+    apply NotQ
+    exact h p
+  · intro h p
+    by_contra hQ
+    exact h hQ p
+    --contrapose
+
+
+/-!
+### Pushing negations inward: `push Not`
+
+Negations sometimes appear in a form that is inconvenient for ordinary
+mathematical reasoning.
+
+For example, instead of
+
+    ¬ x ≤ y
+
+we usually want to work with
+
+    y <af
+
+`push_neg` performs this kind of normalization.
+-/
+
+example (x y : ℝ) (h : ¬ x ≤ y) : y < x := by
+  push Not at h
+  exact h
+
+example (P : Prop) : P → ¬¬P := by
+  intro h
+  push Not
+  exact h
+
+example (P : Prop) : ¬¬P → P := by
+  intro h
+  push Not at h
+  exact h
+
+example (P : Prop) (h : ¬¬P) : P := by
+  by_contra hP
+  exact h hP
+
+example {α : Type} (P : α → Prop) :
+    ¬(∃ x, P x) ↔ ∀ x, ¬P x := by
+  constructor
+  · intro h
+    push Not at h
+    exact h
+  · intro h
+    push Not
+    exact h
+
+/-In-class-practice-/
+
+example {α : Type} (P : α → Prop) :
+    ¬(∀ x, P x) ↔ ∃ x, ¬P x := by
+  sorry
+/-!
+
+/-!
+Useful forms are
+
+    push_neg
+    push_neg at h
+    push_neg at *
+
+There are also variants such as
+
+    by_cases!
+    by_contra!
+    contrapose!
+
+A useful informal mnemonic is:
+
+    by_cases!   ≈ by_cases   + push_neg
+    by_contra!  ≈ by_contra  + push_neg
+    contrapose! ≈ contrapose + push_neg
+
+The `!` does not mean that Lean automatically finishes the proof.
+It means that the resulting negations are also simplified.
+-/
+
+/-!
+### Negating implication
+-/
+
+example (P Q : Prop) :
+    (P → Q) ↔ (¬P ∨ Q) := by
+  constructor
+  · intro h
+    by_cases hp : P
+    · exact Or.inr (h hp)
+    · exact Or.inl hp
+  · intro h
+    cases h with
+    | inl hnp =>
+        intro p
+        exfalso
+        exact hnp p
+    | inr hq =>
+        intro _
+        exact hq
+
+example (P Q : Prop) :
+    ¬(P → Q) ↔ (P ∧ ¬Q) := by
+  constructor
+  · intro h
+    by_cases hp : P
+    · constructor
+      · exact hp
+      · intro hq
+        exact h (fun _ => hq)
+    · exfalso
+      exact h (fun p => False.elim (hp p))
+  · intro h hf
+    exact h.2 (hf h.1)
 /-!
 ## 10. From contradiction, anything follows
 
@@ -460,6 +626,16 @@ example (x : ℝ) (h : x = 3) : x + 1 = 4 := by
 
 These tactics do different jobs.
 
+
+### `omega`
+
+Use `omega` for Presburger arithmetic over `ℕ` and `ℤ`
+-/
+
+example (m n : ℕ) (h : m + 3 ≤ n) : m + 1 < n := by
+  omega
+
+/-
 ### `simp`
 
 Use `simp` for structural simplification and standard rewrite rules.
@@ -617,7 +793,7 @@ We prove
 example (x : Nat) : x ≤ 1 + x := by
   rw [le_iff_exists_add]
   use 1
-  linarith
+  omega --linarith
 
 
 /-!
@@ -657,76 +833,3 @@ example (n : ℕ) : ∑ k ∈ Finset.range n, (2 * k + 1) = n ^ 2 := by
   | succ n ih =>
       rw [Finset.sum_range_succ, ih]
       ring
-
-
-/-!
-## 19. Returning to Class 1: what does `row_add` hide?
-
-Consider the matrices
--/
-
-def A : Matrix (Fin 2) (Fin 3) ℝ :=
-  !![1, 2, 3;
-     2, 5, 8]
-
--- R₂ ← R₂ - 2R₁
-def B : Matrix (Fin 2) (Fin 3) ℝ :=
-  !![1, 2, 3;
-     0, 1, 2]
-
-
-/-!
-### Short course version
--/
-
-example : Matrix.RowEquivalent A B := by
-  row_add A => B, 1, 0, (-2 : ℝ)
-
-
-/-!
-### The same idea with the underlying Mathlib theorem exposed
-
-Read the proof conceptually:
-
-1. use Mathlib's theorem for adding one row to another;
-2. unfold the concrete matrices;
-3. use function extensionality;
-4. check all possible rows and columns;
-5. simplify the matrix multiplication;
-6. finish the numerical arithmetic.
-
-You do not need to memorize this proof.
--/
-
-example : Matrix.RowEquivalent A B := by
-  convert Matrix.rowEquivalent_transvection
-    A 1 0 (by decide) (-2 : ℝ) using 1 <;>
-  unfold A B <;>
-  funext row col <;>
-  fin_cases row <;>
-  fin_cases col <;>
-  simp <;>
-  norm_num
-
-
-/-!
-## 20. What to remember
-
-The point of this class is not that there is one "correct" tactic sequence.
-
-The same mathematical idea can often be expressed in several Lean styles:
-
-* `exact h` or `assumption`;
-* `apply h` followed by a proof, or one direct `exact`;
-* `constructor`, `exact ⟨_, _⟩`, or `refine ⟨?_, ?_⟩`;
-* `.1/.2`, `cases`, `obtain`, or `rcases`;
-* `intro` + `rcases`, or `rintro`;
-* `use`, `refine`, or a direct existential proof object;
-* `rw` or `subst` for suitable equality problems;
-* `funext` or `ext` for suitable equality problems;
-* a direct theorem or an automation tactic.
-
-The important question is always:
-
-> What is the mathematical structure of the statement I am proving?
--/
