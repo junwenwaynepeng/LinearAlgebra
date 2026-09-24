@@ -701,9 +701,9 @@ A useful rule of thumb:
 
 
 /-!
-## 13. Equality of functions: `funext`
+## 13. Matrix is a function
 
-To prove two functions are equal, prove that they agree at every input.
+Recall that to prove two functions are equal, prove that they agree at every input.
 -/
 
 example (f g : ℝ → ℝ) (h : ∀ x, f x = g x) : f = g := by
