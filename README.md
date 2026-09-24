@@ -81,7 +81,7 @@ Follow the official [manual installation guide](https://lean-lang.org/install/ma
 
 After completing the guide, you should have VS Code, the Lean 4 extension, Elan, and a working Lean installation.
 
-Once everything is set up, continue to [Step 3](#step 3. Clonethe course repository).
+Once everything is set up, continue to [Step 3](#step-3-Clonethe-course-repository).
 
 #### For Beginners
 
@@ -89,7 +89,7 @@ Follow the official [installation guide](https://lean-lang.org/install/).
 
 After completing the three steps, open VS Code and press `Ctrl + Shift + P` (`Cmd + Shift + P` on macOS). Search for `Lean 4: Install Elan` and follow the instructions.
 
-After Elan is installed, continue to [Step 2](Step 2. Check that Git is installed).
+After Elan is installed, continue to [Step 2](#Step-2-Check-that-Git-is-installed).
 
 ---
 
@@ -284,6 +284,29 @@ lake-manifest.json
 so VS Code should open the entire project folder.
 
 When you open a Lean file, the Lean extension will start the Lean language server and display information in the **Infoview**.
+
+If VS Code still does not recognize Lean
+
+If all the checks in Step 5 work correctly, but VS Code still does not recognize .lean files or the Lean Infoview does not appear, check the Lean 4 extension in VS Code:
+
+View → Extensions → Lean 4
+
+Open the official extension published by leanprover.
+
+The Enable button is located near the Install / Uninstall button on the extension page.
+
+If you see both
+
+Enable
+Enable (Workspace)
+
+choose:
+
+Enable
+
+Do not choose Enable (Workspace).
+
+Then reopen the LinearAlgebra folder in VS Code and open a .lean file again.
 
 ---
 
