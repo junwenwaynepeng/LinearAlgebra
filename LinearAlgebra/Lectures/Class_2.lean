@@ -81,6 +81,25 @@ example (x y : ℝ) (h : x = y) : x + 1 = y + 1 := by
 
 
 /-!
+### Functions are equal if they agree on every input: `funext`
+
+Mathematically:
+
+    (∀ x, f x = g x) ⟹ f = g
+
+This is called function extensionality.
+-/
+
+example (f g : ℝ → ℝ) (h : ∀ x, f x = g x) : f = g := by
+  funext x
+  exact h x
+
+/-In-class-practice-/
+
+example : (fun x : ℝ => x + x) = (fun x => 2 * x) := by
+  sorry
+
+/-!
 ## 2. Implication: `intro`, `exact`, `apply`, and `assumption`
 
 A proof of `P → Q` is something that takes a proof of `P` and produces a proof
