@@ -35,15 +35,6 @@ Topics:
 
 /-!
 ## 1. Equality
-
-### Reflexivity: `rfl`
--/
-
-example (x : ℝ) : x = x := by
-  rfl
-
-
-/-!
 ### Rewriting: `rw`
 
 If `h : y = x + 7`, then we may replace `y` by `x + 7`.
