@@ -81,7 +81,7 @@ Follow the official [manual installation guide](https://lean-lang.org/install/ma
 
 After completing the guide, you should have VS Code, the Lean 4 extension, Elan, and a working Lean installation.
 
-Once everything is set up, continue to [Step 3](#step-3-Clonethe-course-repository).
+Once everything is set up, continue to [Step 3](#step-3-Clone-the-course-repository).
 
 #### For Beginners
 
