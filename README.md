@@ -218,6 +218,8 @@ checks that the entire course project builds correctly.
 
 So this step prepares both the correct Lean environment and the Mathlib files needed by the course.
 
+**If an installation command fails once, do not reinstall everything immediately. Close the terminal, open Git Bash again, and retry the command first.**
+
 ---
 
 ### Step 5. Check the installation
