@@ -499,7 +499,6 @@ example {α : Type} (P : α → Prop) :
 example {α : Type} (P : α → Prop) :
     ¬(∀ x, P x) ↔ ∃ x, ¬P x := by
   sorry
-/-!
 
 /-!
 Useful forms are
