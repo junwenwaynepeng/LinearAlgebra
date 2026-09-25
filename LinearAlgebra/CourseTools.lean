@@ -1,6 +1,12 @@
+/-
+Copyright (c) 2026 Wayne Peng.
+Authors: Wayne Peng
+-/
+
 import Mathlib
 
 /-!
+
 Simple course tactics for elementary row operations.
 
 Lean uses 0-based row numbering:
