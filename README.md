@@ -87,9 +87,7 @@ Once everything is set up, continue to [Step 3](#step-3-Clone-the-course-reposit
 
 Follow the official [installation guide](https://lean-lang.org/install/).
 
-After completing the three steps, open VS Code and press `Ctrl + Shift + P` (`Cmd + Shift + P` on macOS). Search for `Lean 4: Install Elan` and follow the instructions.
-
-After Elan is installed, continue to [Step 2](#Step-2-Check-that-Git-is-installed).
+Continue to [Step 2](#Step-2-Check-that-Git-is-installed).
 
 ---
 
@@ -188,7 +186,9 @@ lake exe cache get
 lake build
 ```
 
-This is an important part of the initial project setup.
+This is an important part of the initial project setup. 
+
+- If the terminal shows: `lake: Command Not Found`, closed and reopen the termianl. If it still cannot find `lake`, it means `elan` is not installed, open VS Code and press `Ctrl + Shift + P` (`Cmd + Shift + P` on macOS). Search for `Lean 4: Install Elan` and follow the instructions.
 
 The repository contains:
 
