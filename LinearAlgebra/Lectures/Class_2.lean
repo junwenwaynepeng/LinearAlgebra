@@ -3,33 +3,47 @@ import Mathlib
 open scoped BigOperators
 
 /-!
-# Class 2 — Basic Logic and Equivalent Proof Styles in Lean
+# Class 2 — The Language of Proof in Lean
 
-In Class 1, we used Lean to verify Gaussian elimination.
-This class develops the proof language that appeared behind those examples.
+In Class 1, we used Lean to verify computations and row operations arising from Gaussian elimination.
+In this class, we step back and develop the basic proof language that appeared behind those examples.
 
 A major theme of this file is:
 
-> The same mathematical argument can often be written in several equivalent
-> Lean styles.
+> The same mathematical argument can often be expressed in several different Lean styles.
 
-We intentionally keep these equivalent versions together so that you can compare
-them and gradually develop your own proof-writing style.
+We intentionally keep several equivalent proofs together. The goal is not to memorize every possible tactic, but to learn how the logical structure of a mathematical statement suggests a natural proof strategy in Lean.
+
+For example:
+
+- to prove an implication, assume the hypothesis;
+- to prove a conjunction, prove both parts;
+- to prove an existential statement, provide a witness;
+- to prove two functions or matrices are equal, compare their values;
+- to prove a statement by contradiction or contraposition, transform the logical structure of the goal.
+
+As you become more familiar with Lean, you will gradually develop your own preferred proof-writing style.
 
 Topics:
 
-1. Equality: `rfl`, `rw`, `subst`, and `congrArg`
-2. Implication: `intro`, `exact`, `apply`, and `assumption`
-3. Conjunction: `constructor`, `⟨_, _⟩`, `refine`, `.1/.2`
-4. `cases`, `obtain`, `rcases`, and `rintro`
-5. Disjunction
-6. Existential statements: `use`, `refine`, `exact`
-7. Negation, contradiction, and excluded middle
-8. `have` and `suffices`
-9. `simp`, `norm_num`, `ring`, and `linarith`
-10. `funext`, `ext`, `fin_cases`, and `decide`
-11. Induction
-12. Returning to the row operations from Class 1
+1. Equality: `rw`, `subst`, and `congrArg`
+2. Function equality: `funext`
+3. Implication: `intro`, `exact`, `apply`, and `assumption`
+4. Conjunction: constructing and extracting information
+5. `cases`, `obtain`, `rcases`, and pattern matching with `intro`
+6. Disjunction: constructing and analyzing cases
+7. Existential statements: witnesses and extraction
+8. Excluded middle, `by_cases`, and `classical`
+9. Negation, contraposition, `push Not`, and `by_contra`
+10. Contradiction
+11. Intermediate statements: `have` and `suffices`
+12. Automation: `omega`, `simp`, `norm_num`, `ring`, and `linarith`
+13. Matrices as functions: `funext` and `ext`
+14. Finite cases: `fin_cases`
+15. Decidable propositions: `decide`
+16. Natural-number proofs in different styles
+17. Induction
+18. Finite sums and induction
 -/
 
 
@@ -137,7 +151,7 @@ example (P Q : Prop) (h : P → Q) (p : P) : Q := by
 
 
 /-!
-## 3. Conjunction: constructing `P ∧ Q`
+## 3. Conjunction `P ∧ Q` in goal
 
 There are several common equivalent styles.
 
@@ -171,7 +185,7 @@ example (P Q : Prop) (p : P) (q : Q) : P ∧ Q := by
 
 
 /-!
-## 4. Conjunction: extracting information from `P ∧ Q`
+## 4. Conjunction `P ∧ Q` in assumption
 
 There are several common styles.
 
@@ -214,7 +228,7 @@ example (P Q : Prop) (h : P ∧ Q) : P := by
 
 
 /-!
-### `rintro` = `intro` + decomposition
+### Version 5: `intro` with decompostion
 
 The next two proofs are equivalent.
 -/
@@ -230,7 +244,11 @@ example (P Q : Prop) : P ∧ Q → P := by
 
 
 /-!
-## 5. Disjunction: proving `P ∨ Q`
+## 5. Disjunction `P ∨ Q` in goal
+-/
+
+/-!
+### Version 1: left or right
 -/
 
 example (P Q : Prop) (p : P) : P ∨ Q := by
@@ -241,9 +259,19 @@ example (P Q : Prop) (q : Q) : P ∨ Q := by
   right
   exact q
 
+/-!
+### Version 2: Or.inl or Or.inr
+-/
+
+example (P Q : Prop) (p : P) : P ∨ Q := by
+  exact Or.inl p
+
+example (P Q : Prop) (q : Q) : P ∨ Q := by
+  exact Or.inr q
+
 
 /-!
-## 6. Disjunction: extracting information from `P ∨ Q`
+## 6. Disjunction `P ∨ Q` in assumption
 
 Again, the following proofs establish the same statement.
 
@@ -283,6 +311,16 @@ example (P Q : Prop) (h : P ∨ Q) : Q ∨ P := by
   · left
     exact q
 
+
+/-!
+### Version 3: `rcases`
+-/
+
+example (P Q : Prop) (h : P ∨ Q) : Q ∨ P := by
+  · right
+    exact
+  · left
+    exact q
 
 /-!
 ## 7. Existential statements
@@ -361,30 +399,10 @@ example (P : Prop) : P ∨ ¬P := by
   · right
     exact h
 
-/-In-class-practicer-/
+/-In-class-practice-/
 
 example (P Q : Prop) (h₁ : P → Q) (h₂ : ¬P → Q) : Q := by
   sorry
-
-/-!
-### `classical`
-
-Lean is constructive by default.
-
-Writing
-
-    classical
-
-allows Lean to use classical reasoning and classical decidability.
-
-For this course, you mainly need to recognize this line when it appears
-in a proof.
--/
-
-example (P : Prop) : P ∨ ¬P := by
-  --classical
-  exact Classical.em P
-
 
 /-!
 ## 9. Negation and contraposition
@@ -471,9 +489,9 @@ For example, instead of
 
 we usually want to work with
 
-    y <af
+    y < x
 
-`push_neg` performs this kind of normalization.
+`push Not` performs this kind of normalization.
 -/
 
 example (x y : ℝ) (h : ¬ x ≤ y) : y < x := by
@@ -513,9 +531,9 @@ example {α : Type} (P : α → Prop) :
 /-!
 Useful forms are
 
-    push_neg
-    push_neg at h
-    push_neg at *
+    push Not
+    push Not at h
+    push Not at *
 
 There are also variants such as
 
@@ -525,9 +543,9 @@ There are also variants such as
 
 A useful informal mnemonic is:
 
-    by_cases!   ≈ by_cases   + push_neg
-    by_contra!  ≈ by_contra  + push_neg
-    contrapose! ≈ contrapose + push_neg
+    by_cases!   ≈ by_cases   + push Not
+    by_contra!  ≈ by_contra  + push Not
+    contrapose! ≈ contrapose + push Not
 
 The `!` does not mean that Lean automatically finishes the proof.
 It means that the resulting negations are also simplified.
@@ -842,3 +860,37 @@ example (n : ℕ) : ∑ k ∈ Finset.range n, (2 * k + 1) = n ^ 2 := by
   | succ n ih =>
       rw [Finset.sum_range_succ, ih]
       ring
+
+/-
+### Reading Lean as mathematical language
+
+A useful habit is to translate each Lean command into an ordinary mathematical sentence.
+
+| Lean | Natural mathematical language |
+|---|---|
+| `intro hP` | Assume `P`. |
+| `intro x` | Let `x` be arbitrary. |
+| `exact h` | This follows from `h`. |
+| `apply h` | Apply `h`; it remains to verify the required hypothesis. |
+| `assumption` | This is already one of our assumptions. |
+| `constructor` | We prove the two required parts separately. |
+| `left` | We prove the left-hand alternative. |
+| `right` | We prove the right-hand alternative. |
+| `rcases h with ⟨p, q⟩` | From `h`, we obtain both `P` and `Q`. |
+| `rcases h with p \| q` | Consider the two possible cases: `P` or `Q`. |
+| `use x` | Take `x` as the required witness. |
+| `have h : P := by ...` | First, we show that `P`. |
+| `suffices h : P by ...` | It is enough to show that `P`. |
+| `by_cases h : P` | Consider separately the cases `P` and `¬P`. |
+| `by_contra h` | Suppose, for contradiction, that the desired statement is false. |
+| `contrapose` | We prove the statement by proving its contrapositive. |
+| `rw [h]` | Rewrite using the equality `h`. |
+| `subst x` | Substitute for `x` using an equality involving `x`. |
+| `funext x` | Fix an arbitrary `x`; it is enough to compare the two functions at `x`. |
+| `ext i j` | Fix arbitrary `i` and `j`; it is enough to compare the corresponding matrix entries. |
+| `fin_cases i` | Check each of the finitely many possible values of `i`. |
+| `induction n with` | We prove the statement by induction on `n`. |
+
+The important idea is not to translate tactics word for word, but to recognize
+the mathematical proof move that each tactic represents.
+-/
