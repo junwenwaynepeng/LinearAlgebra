@@ -146,7 +146,7 @@ noncomputable def polyNeg (p : P) : P :=
 
 theorem polyAdd_coeff (p q : P) (n : ℕ) :
     (polyAdd p q).coeff n = p.coeff n + q.coeff n := by
-  classical
+  --classical
   by_cases h : n < max p.natDegree q.natDegree + 1
   · rw [polyAdd, Polynomial.finsetSum_coeff]
     have hmem : n ∈ Finset.range (max p.natDegree q.natDegree + 1) := by
@@ -195,8 +195,10 @@ theorem P_is_vector_space : VectorSpaceAxioms ℝ P where
   add_assoc := by
     intro u v w
     repeat rw [poly_add]
-    unfold polyAdd
-    simp?
+    --unfold polyAdd
+    ext n
+    repeat rw [polyAdd_coeff]
+
 
 
 
