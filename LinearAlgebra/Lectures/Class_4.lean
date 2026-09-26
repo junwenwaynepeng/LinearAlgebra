@@ -389,3 +389,85 @@ theorem F_is_vector_space : VectorSpaceAxioms ℝ (F X) where
     ext x
     rw [fun_smul]
     exact one_mul (v x)
+
+variable {K V : Type*}
+variable [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+
+def IsVectorSubspace
+    (K : Type*) {V : Type*}
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (W : Set V) : Prop :=
+  ∃ (addW : Add (↥W))
+    (zeroW : Zero (↥W))
+    (negW : Neg (↥W))
+    (smulW : SMul K (↥W)),
+
+    @VectorSpaceAxioms K (↥W) _
+      addW zeroW negW smulW ∧
+
+    (∀ u v : ↥W,
+      ((addW.add u v : ↥W) : V) =
+        (u : V) + (v : V)) ∧
+
+    (((zeroW.zero : ↥W) : V) = (0 : V)) ∧
+
+    (∀ u : ↥W,
+      ((negW.neg u : ↥W) : V) = -(u : V)) ∧
+
+    (∀ (a : K) (u : ↥W),
+      ((smulW.smul a u : ↥W) : V) =
+        a • (u : V))
+
+theorem subspace_criterion
+    {K V : Type*}
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms K V)
+    (W : Set V)
+    (zero_mem : (0 : V) ∈ W)
+    (add_mem :
+      ∀ u v : V, u ∈ W → v ∈ W → u + v ∈ W)
+    (smul_mem :
+      ∀ (a : K) (v : V), v ∈ W → a • v ∈ W) :
+    IsVectorSubspace K W := by
+  let : Add (↥W) :=
+    ⟨fun u v =>
+      ⟨(u : V) + (v : V),
+        add_mem (u : V) (v : V) u.property v.property⟩⟩
+
+  let : Zero (↥W) :=
+    ⟨⟨0, zero_mem⟩⟩
+
+  let : SMul K (↥W) :=
+    ⟨fun a v =>
+      ⟨a • (v : V),
+        smul_mem a (v : V) v.property⟩⟩
+
+  let : Neg (↥W) :=
+    ⟨fun v =>
+      ⟨-(v : V), by
+        sorry⟩⟩
+
+  have W_is_vector_space : VectorSpaceAxioms K (Subtype W) where
+  add_assoc := by
+    sorry
+
+  add_comm := by
+    sorry
+
+  zero_add := by
+    sorry
+
+  neg_add_cancel := by
+    sorry
+
+  smul_add := by
+    sorry
+
+  add_smul := by
+    sorry
+
+  mul_smul := by
+    sorry
+
+  one_smul := by
+    sorry
