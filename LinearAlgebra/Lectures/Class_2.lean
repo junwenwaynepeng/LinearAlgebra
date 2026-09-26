@@ -1,5 +1,5 @@
 import Mathlib
---import LinearAlgebra.CourseTools
+/-import LinearAlgebra.CourseTools-/
 open scoped BigOperators
 
 /-!
@@ -44,6 +44,38 @@ Topics:
 16. Decidable propositions: `decide`
 17. Induction
 18. Finite sums and induction
+
+### Reading Lean as mathematical language
+
+A useful habit is to translate each Lean command into an ordinary mathematical sentence.
+
+| Lean | Natural mathematical language |
+|---|---|
+| `intro hP` | Assume `P`. |
+| `intro x` | Let `x` be arbitrary. |
+| `exact h` | This follows from `h`. |
+| `apply h` | Apply `h`; it remains to verify the required hypothesis. |
+| `assumption` | This is already one of our assumptions. |
+| `constructor` | We prove the two required parts separately. |
+| `left` | We prove the left-hand alternative. |
+| `right` | We prove the right-hand alternative. |
+| `rcases h with ⟨p, q⟩` | From `h`, we obtain both `P` and `Q`. |
+| `rcases h with p \| q` | Consider the two possible cases: `P` or `Q`. |
+| `use x` | Take `x` as the required witness. |
+| `have h : P := by ...` | First, we show that `P`. |
+| `suffices h : P by ...` | It is enough to show that `P`. |
+| `by_cases h : P` | Consider separately the cases `P` and `¬P`. |
+| `by_contra h` | Suppose, for contradiction, that the desired statement is false. |
+| `contrapose` | We prove the statement by proving its contrapositive. |
+| `rw [h]` | Rewrite using the equality `h`. |
+| `subst x` | Substitute for `x` using an equality involving `x`. |
+| `funext x` | Fix an arbitrary `x`; it is enough to compare the two functions at `x`. |
+| `ext i j` | Fix arbitrary `i` and `j`; it is enough to compare the corresponding matrix entries. |
+| `fin_cases i` | Check each of the finitely many possible values of `i`. |
+| `induction n with` | We prove the statement by induction on `n`. |
+
+The important idea is not to translate tactics word for word, but to recognize
+the mathematical proof move that each tactic represents.
 -/
 
 
@@ -387,6 +419,23 @@ example (P : Prop) : P ∨ ¬P := by
   --classical
   exact Classical.em P
 
+/-!
+In practice, we often use the same idea through `by_cases`.
+
+    by_cases h : P
+
+splits the proof into two cases:
+
+    h : P
+
+and
+
+    h : ¬P.
+
+Mathematically: consider separately the cases where `P` is true
+and where `P` is false.
+-/
+
 example (P : Prop) : P ∨ ¬P := by
   by_cases h : P
   · left
@@ -400,7 +449,7 @@ example (P Q : Prop) (h₁ : P → Q) (h₂ : ¬P → Q) : Q := by
   sorry
 
 /-!
-## 9. Negation and contraposition
+## 9. Negation, contraposition, and proof by contradiction.
 
 In Lean,
 
@@ -613,21 +662,23 @@ example (x : ℝ) (h : x = 3) : x + 1 = 4 := by
 /-!
 ## 12. Implication and its negation
 
-We use implication and its negation to summarize all the tactics
-and proof techniques from this class.
+We use these examples to combine several proof techniques from this class.
 
-Classically,
+A useful way to understand an implication is
 
-    P → Q
+    P → Q    ↔    ¬P ∨ Q.
 
-can be expressed as
+The implication fails exactly when
 
-    ¬P ∨ Q,
+    P
 
-and the failure of an implication means
+is true but
 
-    P ∧ ¬Q.
+    Q
 
+is false:
+
+    ¬(P → Q)    ↔    P ∧ ¬Q.
 -/
 
 example (P Q : Prop) :
@@ -666,7 +717,7 @@ example (P Q : Prop) :
     exact h.2 (hf h.1)
 
 /-!
-## 14. Five useful automation tactics
+## 13. Five useful automation tactics
 
 These tactics do different jobs.
 
@@ -737,7 +788,7 @@ A useful rule of thumb:
 
 
 /-!
-## 15. Matrix is a function
+## 14. Matrix as functions
 
 Recall that to prove two functions are equal, prove that they agree at every input.
 -/
@@ -793,7 +844,7 @@ For this course:
 
 
 /-!
-## 16. Finite cases: `fin_cases`
+## 15. Finite cases: `fin_cases`
 
 If `i : Fin 3`, then there are only three possibilities:
 `0`, `1`, and `2`.
@@ -807,7 +858,7 @@ example (i : Fin 3) : i = 0 ∨ i = 1 ∨ i = 2 := by
 
 
 /-!
-## 17. Decidable propositions: `decide`
+## 16. Decidable propositions: `decide`
 
 Some propositions can be checked directly by computation.
 -/
@@ -826,7 +877,7 @@ the source row and target row must be different.
 
 
 /-!
-## 18. Proving a natural-number inequality in different ways
+## 17. Proving a natural-number inequality in different ways
 
 We prove
 
@@ -878,37 +929,3 @@ example (n : ℕ) : ∑ k ∈ Finset.range n, (2 * k + 1) = n ^ 2 := by
   | succ n ih =>
       rw [Finset.sum_range_succ, ih]
       ring
-
-/-
-### Reading Lean as mathematical language
-
-A useful habit is to translate each Lean command into an ordinary mathematical sentence.
-
-| Lean | Natural mathematical language |
-|---|---|
-| `intro hP` | Assume `P`. |
-| `intro x` | Let `x` be arbitrary. |
-| `exact h` | This follows from `h`. |
-| `apply h` | Apply `h`; it remains to verify the required hypothesis. |
-| `assumption` | This is already one of our assumptions. |
-| `constructor` | We prove the two required parts separately. |
-| `left` | We prove the left-hand alternative. |
-| `right` | We prove the right-hand alternative. |
-| `rcases h with ⟨p, q⟩` | From `h`, we obtain both `P` and `Q`. |
-| `rcases h with p \| q` | Consider the two possible cases: `P` or `Q`. |
-| `use x` | Take `x` as the required witness. |
-| `have h : P := by ...` | First, we show that `P`. |
-| `suffices h : P by ...` | It is enough to show that `P`. |
-| `by_cases h : P` | Consider separately the cases `P` and `¬P`. |
-| `by_contra h` | Suppose, for contradiction, that the desired statement is false. |
-| `contrapose` | We prove the statement by proving its contrapositive. |
-| `rw [h]` | Rewrite using the equality `h`. |
-| `subst x` | Substitute for `x` using an equality involving `x`. |
-| `funext x` | Fix an arbitrary `x`; it is enough to compare the two functions at `x`. |
-| `ext i j` | Fix arbitrary `i` and `j`; it is enough to compare the corresponding matrix entries. |
-| `fin_cases i` | Check each of the finitely many possible values of `i`. |
-| `induction n with` | We prove the statement by induction on `n`. |
-
-The important idea is not to translate tactics word for word, but to recognize
-the mathematical proof move that each tactic represents.
--/
