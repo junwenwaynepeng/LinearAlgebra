@@ -144,9 +144,10 @@ noncomputable def polyZero : P :=
 noncomputable def polyNeg (p : P) : P :=
   ∑ n ∈ Finset.range (p.natDegree + 1), Polynomial.monomial n (- p.coeff n)
 
+#check Polynomial.coeff_add
+
 theorem polyAdd_coeff (p q : P) (n : ℕ) :
     (polyAdd p q).coeff n = p.coeff n + q.coeff n := by
-  --classical
   by_cases h : n < max p.natDegree q.natDegree + 1
   · rw [polyAdd, Polynomial.finsetSum_coeff]
     have hmem : n ∈ Finset.range (max p.natDegree q.natDegree + 1) := by
@@ -173,6 +174,7 @@ theorem polyAdd_coeff (p q : P) (n : ℕ) :
       · simp [Polynomial.coeff_monomial, hx']
     simpa [Polynomial.coeff_monomial, hp, hq] using hsum
 
+
 local instance : Add P := ⟨polyAdd⟩
 local instance : Zero P := ⟨polyZero⟩
 local instance : Neg P := ⟨polyNeg⟩
@@ -195,20 +197,16 @@ theorem P_is_vector_space : VectorSpaceAxioms ℝ P where
   add_assoc := by
     intro u v w
     repeat rw [poly_add]
-    --unfold polyAdd
     ext n
-    repeat rw [polyAdd_coeff]
-
-
-
-
+    simp only [polyAdd_coeff]
+    exact add_assoc (Polynomial.coeff u n) (Polynomial.coeff v n) (Polynomial.coeff w n)
 
   add_comm := by
     intro u v
-    repeat rw [vector_add_eq]
-    unfold vectorAdd
-    simp?
-    refine ⟨?_,?_,?_⟩<;>ring
+    repeat rw [poly_add]
+    ext n
+    exact add_comm (Polynomial.coeff u n) (Polynomial.coeff v n)
+
 
   zero_add := by
     intro v
