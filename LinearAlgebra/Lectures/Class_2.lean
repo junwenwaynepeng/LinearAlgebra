@@ -228,9 +228,7 @@ example (P Q : Prop) (h : P ∧ Q) : P := by
 
 
 /-!
-### Version 5: `intro` with decompostion
-
-The next two proofs are equivalent.
+### Version 5: `intro` can both introduce an assumption and immediately pattern-match it.
 -/
 
 example (P Q : Prop) : P ∧ Q → P := by
@@ -242,12 +240,9 @@ example (P Q : Prop) : P ∧ Q → P := by
   intro ⟨p, q⟩
   exact p
 
-
 /-!
 ## 5. Disjunction `P ∨ Q` in goal
--/
 
-/-!
 ### Version 1: left or right
 -/
 
@@ -287,7 +282,6 @@ example (P Q : Prop) (h : P ∨ Q) : Q ∨ P := by
       left
       exact q
 
-
 /-!
 ### Version 2: `obtain`
 -/
@@ -298,7 +292,6 @@ example (P Q : Prop) (h : P ∨ Q) : Q ∨ P := by
     exact p
   · left
     exact q
-
 
 /-!
 ### Version 3: `rcases`
@@ -311,16 +304,18 @@ example (P Q : Prop) (h : P ∨ Q) : Q ∨ P := by
   · left
     exact q
 
-
 /-!
-### Version 3: `rcases`
+### Version 4: `intro` can both introduce an assumption and immediately pattern-match it.
 -/
 
-example (P Q : Prop) (h : P ∨ Q) : Q ∨ P := by
-  · right
-    exact
-  · left
-    exact q
+example (P Q : Prop) : (h : P ∨ Q) → Q ∨ P := by
+  intro
+  | Or.inl p =>
+      right
+      exact p
+  | Or.inr q =>
+      left
+      exact q
 
 /-!
 ## 7. Existential statements
@@ -423,7 +418,6 @@ in several equivalent styles.
 
 ### Version 1: unfold `Not`, then use `apply`
 -/
-
 
 example (P Q : Prop) : (P → Q) → (¬Q → ¬P) := by
   unfold Not
@@ -552,47 +546,17 @@ It means that the resulting negations are also simplified.
 -/
 
 /-!
-### Negating implication
--/
-
-example (P Q : Prop) :
-    (P → Q) ↔ (¬P ∨ Q) := by
-  constructor
-  · intro h
-    by_cases hp : P
-    · exact Or.inr (h hp)
-    · exact Or.inl hp
-  · intro h
-    cases h with
-    | inl hnp =>
-        intro p
-        exfalso
-        exact hnp p
-    | inr hq =>
-        intro _
-        exact hq
-
-example (P Q : Prop) :
-    ¬(P → Q) ↔ (P ∧ ¬Q) := by
-  constructor
-  · intro h
-    by_cases hp : P
-    · constructor
-      · exact hp
-      · intro hq
-        exact h (fun _ => hq)
-    · exfalso
-      exact h (fun p => False.elim (hp p))
-  · intro h hf
-    exact h.2 (hf h.1)
-/-!
 ## 10. From contradiction, anything follows
 
-We prove
+We already use `contradiction` above. Here, we prove
 
     (P ∧ ¬P) → Q
 
-in several styles.
+to illustrate the details of contradiction.
+
+When you obtain P and ¬P in your assumption, it is a contradiction.
+We can change whatever goal to false by calling `exfalso` and deducing `False`.
+Or, we can call `contradiction` directly
 -/
 
 example (P Q : Prop) : (P ∧ ¬P) → Q := by
@@ -601,20 +565,10 @@ example (P Q : Prop) : (P ∧ ¬P) → Q := by
   exfalso
   exact notp p
 
-
 example (P Q : Prop) : (P ∧ ¬P) → Q := by
   intro h
   rcases h with ⟨p, notp⟩
   contradiction
-
-
-example (P Q : Prop) : (P ∧ ¬P) → Q := by
-  intro h
-  cases h with
-  | intro p notp =>
-      exfalso
-      exact notp p
-
 
 /-!
 ## 11. Intermediate statements: `have` and `suffices`
@@ -649,7 +603,48 @@ example (x : ℝ) (h : x = 3) : x + 1 = 4 := by
 
 
 /-!
-## 12. Four useful automation tactics
+## 12.  Negating implication
+
+We use negating implication to summarize all the tacktics we have introduced.
+-/
+
+example (P Q : Prop) :
+    (P → Q) ↔ (¬P ∨ Q) := by
+  constructor
+  · intro h
+    by_cases hp : P
+    · right
+      exact (h hp)
+    · left
+      exact hp
+  · intro h p
+    obtain notp | q := h
+    · contradiction
+    · assumption
+
+example (P Q : Prop) :
+    ¬(P → Q) ↔ (P ∧ ¬Q) := by
+  constructor
+  · intro h
+    by_cases hp : P
+    · constructor
+      · exact hp
+      · intro hq
+        unfold Not at h
+        have pimpq: P → Q := by
+          intro _
+          exact hq
+        exact h pimpq
+    · exfalso
+      have pimpq : P → Q := by
+        intro hp
+        contradiction
+      exact h pimpq
+  · intro h hf
+    exact h.2 (hf h.1)
+
+/-!
+## 14. Four useful automation tactics
 
 These tactics do different jobs.
 
@@ -719,7 +714,7 @@ A useful rule of thumb:
 
 
 /-!
-## 13. Matrix is a function
+## 15. Matrix is a function
 
 Recall that to prove two functions are equal, prove that they agree at every input.
 -/
@@ -775,7 +770,7 @@ For this course:
 
 
 /-!
-## 14. Finite cases: `fin_cases`
+## 16. Finite cases: `fin_cases`
 
 If `i : Fin 3`, then there are only three possibilities:
 `0`, `1`, and `2`.
@@ -789,7 +784,7 @@ example (i : Fin 3) : i = 0 ∨ i = 1 ∨ i = 2 := by
 
 
 /-!
-## 15. Decidable propositions: `decide`
+## 17. Decidable propositions: `decide`
 
 Some propositions can be checked directly by computation.
 -/
@@ -808,7 +803,7 @@ the source row and target row must be different.
 
 
 /-!
-## 16. Proving a natural-number inequality in different ways
+## 18. Proving a natural-number inequality in different ways
 
 We prove
 
@@ -836,7 +831,7 @@ example (x : Nat) : x ≤ 1 + x := by
 
 
 /-!
-## 17. A first induction example
+## 19. A first induction example
 -/
 
 example (n : Nat) : 0 + n = n := by
@@ -848,7 +843,7 @@ example (n : Nat) : 0 + n = n := by
 
 
 /-!
-## 18. The sum of the first `n` odd numbers is `n²`
+## 20. The sum of the first `n` odd numbers is `n²`
 
 This example combines induction, rewriting, and polynomial algebra.
 -/
