@@ -429,45 +429,24 @@ theorem subspace_criterion
     (smul_mem :
       ∀ (a : K) (v : V), v ∈ W → a • v ∈ W) :
     IsVectorSubspace K W := by
-  let : Add (↥W) :=
+  letI : Add (↥W) :=
     ⟨fun u v =>
       ⟨(u : V) + (v : V),
         add_mem (u : V) (v : V) u.property v.property⟩⟩
 
-  let : Zero (↥W) :=
+  letI : Zero (↥W) :=
     ⟨⟨0, zero_mem⟩⟩
 
-  let : SMul K (↥W) :=
+  letI : SMul K (↥W) :=
     ⟨fun a v =>
       ⟨a • (v : V),
         smul_mem a (v : V) v.property⟩⟩
 
-  let : Neg (↥W) :=
+  letI : Neg (↥W) :=
     ⟨fun v =>
       ⟨-(v : V), by
         sorry⟩⟩
 
-  have W_is_vector_space : VectorSpaceAxioms K (Subtype W) where
-  add_assoc := by
-    sorry
-
-  add_comm := by
-    sorry
-
-  zero_add := by
-    sorry
-
-  neg_add_cancel := by
-    sorry
-
-  smul_add := by
-    sorry
-
-  add_smul := by
-    sorry
-
-  mul_smul := by
-    sorry
-
-  one_smul := by
-    sorry
+  have W_is_vector_space : VectorSpaceAxioms K (↥W) where
+      add_assoc := by
+        intro u v w
