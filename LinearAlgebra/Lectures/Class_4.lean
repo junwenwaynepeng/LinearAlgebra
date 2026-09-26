@@ -9,7 +9,6 @@ where
   add_comm : ∀ u v : V, u + v = v + u
   add_assoc : ∀ u v w : V, (u + v) + w = u + (v + w)
   zero_add : ∀ v : V, 0 + v = v
-  add_zero : ∀ v : V, v + 0 = v
   neg_add_cancel : ∀ v : V, -v + v = 0
 
   -- Scalar multiplication
@@ -87,12 +86,6 @@ theorem V_is_vector_space : VectorSpaceAxioms ℝ V where
     unfold vectorAdd zeroVector
     simp
 
-  add_zero := by
-    intro v
-    change vectorAdd v zeroVector = v
-    unfold vectorAdd zeroVector
-    simp
-
   neg_add_cancel := by
     intro v
     change vectorAdd (vectorNeg v) v = zeroVector
@@ -142,9 +135,53 @@ noncomputable def polyZero : P :=
   (0 : P)
 
 noncomputable def polyNeg (p : P) : P :=
-  ∑ n ∈ Finset.range (p.natDegree + 1), Polynomial.monomial n (- p.coeff n)
+  ∑ n ∈ Finset.range (p.natDegree + 1), Polynomial.monomial n (-1 * p.coeff n)
 
-#check Polynomial.coeff_add
+theorem polySMul_coeff (a : ℝ)(p : P) (n : ℕ) :
+    (polySMul a p).coeff n = a * p.coeff n := by
+  rw [polySMul, Polynomial.finsetSum_coeff]
+  by_cases hn : n < p.natDegree + 1
+  · have hmem : n ∈ Finset.range (p.natDegree + 1) := Finset.mem_range.mpr hn
+    rw [Finset.sum_eq_single n]
+    · simp [Polynomial.coeff_monomial]
+    · intro x hx hne
+      simp [Polynomial.coeff_monomial, hne]
+    · intro hnot
+      exact (hnot hmem).elim
+  · have hp : p.coeff n = 0 :=
+      Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)
+    rw [Finset.sum_eq_zero]
+    · simp [hp]
+    · intro x hx
+      have hxn : x ≠ n := by
+        intro heq
+        subst x
+        have : n < p.natDegree + 1 := Finset.mem_range.mp hx
+        omega
+      simp [Polynomial.coeff_monomial, hxn]
+
+theorem polyNeg_coeff (p : P) (n : ℕ) :
+    (polyNeg p).coeff n = -p.coeff n := by
+  rw [polyNeg, Polynomial.finsetSum_coeff]
+  by_cases hn : n < p.natDegree + 1
+  · have hmem : n ∈ Finset.range (p.natDegree + 1) := Finset.mem_range.mpr hn
+    rw [Finset.sum_eq_single n]
+    · simp [Polynomial.coeff_monomial]
+    · intro x hx hne
+      simp [Polynomial.coeff_monomial, hne]
+    · intro hnot
+      exact (hnot hmem).elim
+  · have hp : p.coeff n = 0 :=
+      Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)
+    rw [Finset.sum_eq_zero]
+    · simp [hp]
+    · intro x hx
+      have hxn : x ≠ n := by
+        intro heq
+        subst x
+        have : n < p.natDegree + 1 := Finset.mem_range.mp hx
+        omega
+      simp [Polynomial.coeff_monomial, hxn]
 
 theorem polyAdd_coeff (p q : P) (n : ℕ) :
     (polyAdd p q).coeff n = p.coeff n + q.coeff n := by
@@ -153,7 +190,7 @@ theorem polyAdd_coeff (p q : P) (n : ℕ) :
     have hmem : n ∈ Finset.range (max p.natDegree q.natDegree + 1) := by
       simpa [Finset.mem_range] using h
     rw [Finset.sum_eq_single n]
-    · simp [Polynomial.coeff_monomial]
+    · simp
     · intro a ha hne
       simp [Polynomial.coeff_monomial, hne]
     · intro hnot
@@ -170,7 +207,7 @@ theorem polyAdd_coeff (p q : P) (n : ℕ) :
       intro x hx
       by_cases hx' : x = n
       · subst hx'
-        simp [Polynomial.coeff_monomial, hp, hq]
+        simp [hp, hq]
       · simp [Polynomial.coeff_monomial, hx']
     simpa [Polynomial.coeff_monomial, hp, hq] using hsum
 
@@ -205,52 +242,150 @@ theorem P_is_vector_space : VectorSpaceAxioms ℝ P where
     intro u v
     repeat rw [poly_add]
     ext n
+    repeat rw [polyAdd_coeff]
     exact add_comm (Polynomial.coeff u n) (Polynomial.coeff v n)
-
 
   zero_add := by
     intro v
-    rw [zero_vector, vector_add_eq]
-    unfold vectorAdd zeroVector
+    rw [poly_add]
+    ext n
+    rw [polyAdd_coeff]
     simp
-
-  add_zero := by
-    intro v
-    change vectorAdd v zeroVector = v
-    unfold vectorAdd zeroVector
-    simp
+    trivial
 
   neg_add_cancel := by
     intro v
-    change vectorAdd (vectorNeg v) v = zeroVector
-    unfold vectorAdd vectorNeg zeroVector
+    rw [poly_add]
+    ext n
+    rw [polyAdd_coeff]
+    rw [add_comm]
+    rw [neg_poly, polyNeg_coeff]
     simp
+    trivial
 
   smul_add := by
     intro a u v
-    change scalarMul a (vectorAdd u v) =
-      vectorAdd (scalarMul a u) (scalarMul a v)
-    unfold scalarMul vectorAdd
-    simp?
-    refine ⟨?_,?_,?_⟩<;>ring
+    repeat rw [poly_smul, poly_add]
+    rw [poly_smul]
+    ext n
+    rw [polyAdd_coeff]
+    simp [polySMul_coeff]
+    simp [polyAdd_coeff]
+    exact mul_add a (Polynomial.coeff u n) (Polynomial.coeff v n)
 
   add_smul := by
     intro a b v
-    change scalarMul (a + b) v = vectorAdd (scalarMul a v) (scalarMul b v)
-    unfold scalarMul vectorAdd
-    simp?
-    refine ⟨?_,?_,?_⟩<;>ring
+    repeat rw [poly_smul, poly_add]
+    repeat rw [poly_smul]
+    ext n
+    rw [polyAdd_coeff]
+    simp [polySMul_coeff]
+    exact add_mul a b (Polynomial.coeff v n)
 
   mul_smul := by
     intro a b v
-    change scalarMul (a * b) v =
-      scalarMul a (scalarMul b v)
-    unfold scalarMul
-    simp?
-    refine ⟨?_,?_,?_⟩<;>ring
+    ext n
+    repeat rw [poly_smul]
+    simp [polySMul_coeff]
+    exact mul_assoc a b (Polynomial.coeff v n)
 
   one_smul := by
     intro v
-    change scalarMul 1 v = v
-    unfold scalarMul
+    ext n
+    rw [poly_smul]
+    simp [polySMul_coeff]
+
+variable (X : Type*)
+abbrev F := X → ℝ
+
+def funAdd (f g : X → ℝ) : X → ℝ :=
+  fun x => f x + g x
+
+def funSMul (a : ℝ) (f : X → ℝ) : X → ℝ :=
+  fun x => a * f x
+
+def funZero : X → ℝ  :=
+  fun _ => 0
+
+def funNeg (f : X → ℝ ) : X → ℝ :=
+  fun x => - (f x)
+
+local instance : Add (F X) := ⟨funAdd X⟩
+local instance : Zero (F X) := ⟨funZero X⟩
+local instance : Neg (F X) := ⟨funNeg X⟩
+local instance : SMul ℝ (F X) := ⟨funSMul X⟩
+
+theorem fun_add (p q : X → ℝ) :
+    p + q = funAdd X p q := by
+  rfl
+
+theorem zero_fun : 0 = funZero := by
+  rfl
+
+theorem fun_smul (a : ℝ) (p : X → ℝ) : a • p = funSMul X a p :=by
+  rfl
+
+theorem neg_fun (p : X → ℝ) : -p = funNeg X p := by
+  rfl
+
+theorem F_is_vector_space : VectorSpaceAxioms ℝ (F X) where
+  add_assoc := by
+    intro u v w
+    ext x
+    repeat rw [fun_add]
+    unfold funAdd
+    exact add_assoc (u x) (v x) (w x)
+
+  add_comm := by
+    intro u v
+    ext x
+    repeat rw [fun_add]
+    unfold funAdd
+    exact add_comm (u x) (v x)
+
+  zero_add := by
+    intro v
+    ext x
+    rw [fun_add]
+    unfold funAdd
     simp
+    trivial
+
+  neg_add_cancel := by
+    intro v
+    ext x
+    rw [fun_add]
+    unfold funAdd
+    rw [neg_fun]
+    unfold funNeg
+    simp
+    trivial
+
+  smul_add := by
+    intro a u v
+    ext x
+    repeat rw [fun_smul, fun_add]
+    rw [fun_smul]
+    unfold funAdd funSMul
+    simp
+    exact mul_add a (u x) (v x)
+
+  add_smul := by
+    intro a b v
+    ext x
+    repeat rw [fun_smul, fun_add]
+    repeat rw[fun_smul]
+    unfold funAdd funSMul
+    exact add_mul a b (v x)
+
+  mul_smul := by
+    intro a b v
+    ext x
+    repeat rw [fun_smul]
+    exact mul_assoc a b (v x)
+
+  one_smul := by
+    intro v
+    ext x
+    rw [fun_smul]
+    exact one_mul (v x)
