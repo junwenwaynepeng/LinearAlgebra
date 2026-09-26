@@ -26,22 +26,22 @@ As you become more familiar with Lean, you will gradually develop your own prefe
 
 Topics:
 
-1. Equality: `rw`, `subst`, and `congrArg`
-2. Function equality: `funext`
-3. Implication: `intro`, `exact`, `apply`, and `assumption`
-4. Conjunction: constructing and extracting information
-5. `cases`, `obtain`, `rcases`, and pattern matching with `intro`
-6. Disjunction: constructing and analyzing cases
+1. Equality: `rw`, `subst`, `congrArg`, and `funext`
+2. Implication: `intro`, `exact`, `apply`, and `assumption`
+3. Conjunction in the goal
+4. Conjunction in the assumptions
+5. Disjunction in the goal
+6. Disjunction in the assumptions
 7. Existential statements: witnesses and extraction
-8. Excluded middle, `by_cases`, and `classical`
+8. Excluded middle and `by_cases`
 9. Negation, contraposition, `push Not`, and `by_contra`
-10. Contradiction
+10. Contradiction: `exfalso` and `contradiction`
 11. Intermediate statements: `have` and `suffices`
-12. Automation: `omega`, `simp`, `norm_num`, `ring`, and `linarith`
-13. Matrices as functions: `funext` and `ext`
-14. Finite cases: `fin_cases`
-15. Decidable propositions: `decide`
-16. Natural-number proofs in different styles
+12. Implication and its negation
+13. Automation: `omega`, `simp`, `norm_num`, `ring`, and `linarith`
+14. Matrices as functions: `funext` and `ext`
+15. Finite cases: `fin_cases`
+16. Decidable propositions: `decide`
 17. Induction
 18. Finite sums and induction
 -/
@@ -308,7 +308,7 @@ example (P Q : Prop) (h : P ∨ Q) : Q ∨ P := by
 ### Version 4: `intro` can both introduce an assumption and immediately pattern-match it.
 -/
 
-example (P Q : Prop) : (h : P ∨ Q) → Q ∨ P := by
+example (P Q : Prop) :  P ∨ Q → Q ∨ P := by
   intro
   | Or.inl p =>
       right
@@ -365,8 +365,8 @@ example (h : ∃ x : ℝ, x = 3) : True := by
 
 
 /-!
-If the existential statement is introduced as an assumption, `intro ⟨?_,?_ ⟩ ` can
-introduce and decompose it immediately.
+If an existential statement is introduced as an assumption, `intro` can
+introduce and decompose it at the same time.
 -/
 
 example : (∃ x : ℝ, x = 3) → True := by
@@ -449,7 +449,6 @@ example (P Q : Prop) (h : P → Q) : ¬Q → ¬P := by
 
 /-!
 ### version 4: Contrapose
-The above direction is constructive, and the reverse is classical reasoning
 -/
 
 example (P Q : Prop) (h : P → Q) : ¬Q → ¬P := by
@@ -548,15 +547,24 @@ It means that the resulting negations are also simplified.
 /-!
 ## 10. From contradiction, anything follows
 
-We already use `contradiction` above. Here, we prove
+Suppose our assumptions contain both
 
-    (P ∧ ¬P) → Q
+    P
 
-to illustrate the details of contradiction.
+and
 
-When you obtain P and ¬P in your assumption, it is a contradiction.
-We can change whatever goal to false by calling `exfalso` and deducing `False`.
-Or, we can call `contradiction` directly
+    ¬P.
+
+Then we can derive `False`.
+
+If the current goal is some proposition `Q`, the tactic
+
+    exfalso
+
+changes the goal from `Q` to `False`. Once we prove the contradiction, the
+original goal follows.
+
+The tactic `contradiction` can often detect such a contradiction automatically.
 -/
 
 example (P Q : Prop) : (P ∧ ¬P) → Q := by
@@ -603,9 +611,23 @@ example (x : ℝ) (h : x = 3) : x + 1 = 4 := by
 
 
 /-!
-## 12.  Negating implication
+## 12. Implication and its negation
 
-We use negating implication to summarize all the tacktics we have introduced.
+We use implication and its negation to summarize all the tactics
+and proof techniques from this class.
+
+Classically,
+
+    P → Q
+
+can be expressed as
+
+    ¬P ∨ Q,
+
+and the failure of an implication means
+
+    P ∧ ¬Q.
+
 -/
 
 example (P Q : Prop) :
@@ -644,7 +666,7 @@ example (P Q : Prop) :
     exact h.2 (hf h.1)
 
 /-!
-## 14. Four useful automation tactics
+## 14. Five useful automation tactics
 
 These tactics do different jobs.
 
@@ -706,6 +728,7 @@ example (x y a b : ℝ) (h1 : x < y) (h2 : a < b) :
 /-!
 A useful rule of thumb:
 
+    arithmetic over ℕ or ℤ     → omega
     simplify structure         → simp
     explicit numerical facts   → norm_num
     polynomial identity        → ring
@@ -815,7 +838,7 @@ We prove
 example (x : Nat) : x ≤ 1 + x := by
   rw [le_iff_exists_add]
   use 1
-  omega --linarith
+  omega
 
 
 /-!
