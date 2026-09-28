@@ -390,6 +390,64 @@ theorem F_is_vector_space : VectorSpaceAxioms ℝ (F X) where
     rw [fun_smul]
     exact one_mul (v x)
 
+theorem add_zero_V (K V : Type*)
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms K V) (v : V) :
+    v + 0 = v := by
+  rw [hV.add_comm]
+  exact hV.zero_add v
+
+theorem add_neg_cancel_V (K V : Type*)
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms K V) (v : V) :
+    v + -v = 0 := by
+    rw [hV.add_comm]
+    exact hV.neg_add_cancel v
+
+theorem self_add_self_imp_eq_zero (K V : Type*)
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms K V) (v : V) (hv : v + v = v) :
+    v = 0 := by
+  calc
+    v = 0 + v := (hV.zero_add v).symm
+    _ = -v + v + v := by rw [hV.neg_add_cancel v]
+    _ = -v + (v + v) := (hV.add_assoc (-v) v v)
+    _ = -v + v := by rw [hv]
+    _ = 0 := (hV.neg_add_cancel v)
+
+theorem neg_unique_V (K V : Type*)
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms K V) (v w : V) :
+    v + w = 0 → w = -v := by
+  intro v_add_w_zero
+  calc
+    w = 0 + w := (hV.zero_add w).symm
+    _ = (-v + v) + w := by rw [hV.neg_add_cancel v]
+    _ = -v + (v + w) := hV.add_assoc (-v) v w
+    _ = -v + 0 := by rw [v_add_w_zero]
+    _ = -v := add_zero_V K V hV (-v)
+
+theorem zero_smul_V (K V : Type*)
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms K V) (v : V) :
+    (0 : K) • v = 0 := by
+  have zero_add_zero : (0 : K) • v + (0 : K) • v = (0 : K) • v := by
+    calc
+      (0 : K) • v + (0 : K) • v = (0 + 0 : K) • v := (hV.add_smul (0:K) (0:K) v).symm
+      _ = (0: K) • v := by norm_num
+  exact self_add_self_imp_eq_zero K V hV (0:K) • v
+
+theorem neg_one_smul_V (K V : Type*)
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (v : V) (hV : VectorSpaceAxioms K V) :
+    ((-1) : K) • v = -v := by
+  have hneg : v + (-1 : K) • v = 0 := by
+    calc
+      v + (-1 : K) • v = (1 : K) • v + (-1 : K) • v := by rw [hV.one_smul v]
+      _ = (1 + -1 : K) • v := (hV.add_smul (1:K) (-1:K) v).symm
+      _ = (0 : K) • v := by norm_num
+      _ = 0
+
 variable {K V : Type*}
 variable [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
 
@@ -429,24 +487,63 @@ theorem subspace_criterion
     (smul_mem :
       ∀ (a : K) (v : V), v ∈ W → a • v ∈ W) :
     IsVectorSubspace K W := by
-  letI : Add (↥W) :=
+  let : Add (↥W) :=
     ⟨fun u v =>
       ⟨(u : V) + (v : V),
         add_mem (u : V) (v : V) u.property v.property⟩⟩
 
-  letI : Zero (↥W) :=
+  let : Zero (↥W) :=
     ⟨⟨0, zero_mem⟩⟩
 
-  letI : SMul K (↥W) :=
+  let : SMul K (↥W) :=
     ⟨fun a v =>
       ⟨a • (v : V),
         smul_mem a (v : V) v.property⟩⟩
 
-  letI : Neg (↥W) :=
+  let : Neg (↥W) :=
     ⟨fun v =>
-      ⟨-(v : V), by
-        sorry⟩⟩
+      ⟨-1•(v : V),
+        smul_mem -1 (v : V) v.property⟩⟩
 
-  have W_is_vector_space : VectorSpaceAxioms K (↥W) where
+  have W_is_vector_space : VectorSpaceAxioms K (↥W) :={
       add_assoc := by
         intro u v w
+        apply Subtype.ext
+        exact hV.add_assoc u v w
+      add_comm := by
+        intro u v
+        apply Subtype.ext
+        exact hV.add_comm u v
+      zero_add := by
+        intro u
+        apply Subtype.ext
+        exact hV.zero_add u
+      neg_add_cancel := by
+        intro u
+        apply Subtype.ext
+        exact hV.neg_add_cancel u
+      one_smul := by
+        intro u
+        apply Subtype.ext
+        exact hV.one_smul u
+      mul_smul := by
+        intro a b u
+        apply Subtype.ext
+        exact hV.mul_smul a b u
+      smul_add := by
+        intro a u v
+        apply Subtype.ext
+        exact hV.smul_add a u v
+      add_smul := by
+        intro a b u
+        apply Subtype.ext
+        exact hV.add_smul a b u
+    }
+  refine ⟨inferInstance, inferInstance, inferInstance, inferInstance, W_is_vector_space, ?_, ?_, ?_, ?_ ⟩
+  · intro u V
+    rfl
+  · rfl
+  · intro u
+    rfl
+  · intro a u
+    rfl
