@@ -137,7 +137,7 @@ noncomputable def polyZero : P :=
 noncomputable def polyNeg (p : P) : P :=
   ∑ n ∈ Finset.range (p.natDegree + 1), Polynomial.monomial n (-1 * p.coeff n)
 
-theorem polySMul_coeff (a : ℝ)(p : P) (n : ℕ) :
+theorem polySMul_coeff (a : ℝ) (p : P) (n : ℕ) :
     (polySMul a p).coeff n = a * p.coeff n := by
   rw [polySMul, Polynomial.finsetSum_coeff]
   by_cases hn : n < p.natDegree + 1
@@ -307,7 +307,7 @@ def funSMul (a : ℝ) (f : X → ℝ) : X → ℝ :=
 def funZero : X → ℝ  :=
   fun _ => 0
 
-def funNeg (f : X → ℝ ) : X → ℝ :=
+def funNeg (f : X → ℝ) : X → ℝ :=
   fun x => - (f x)
 
 local instance : Add (F X) := ⟨funAdd X⟩
@@ -390,21 +390,21 @@ theorem F_is_vector_space : VectorSpaceAxioms ℝ (F X) where
     rw [fun_smul]
     exact one_mul (v x)
 
-theorem add_zero_V (K V : Type*)
+lemma add_zero_V (K V : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms K V) (v : V) :
     v + 0 = v := by
   rw [hV.add_comm]
   exact hV.zero_add v
 
-theorem add_neg_cancel_V (K V : Type*)
+lemma add_neg_cancel_V (K V : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms K V) (v : V) :
     v + -v = 0 := by
     rw [hV.add_comm]
     exact hV.neg_add_cancel v
 
-theorem self_add_self_imp_eq_zero (K V : Type*)
+lemma self_add_self_imp_eq_zero (K V : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms K V) (v : V) (hv : v + v = v) :
     v = 0 := by
@@ -415,7 +415,7 @@ theorem self_add_self_imp_eq_zero (K V : Type*)
     _ = -v + v := by rw [hv]
     _ = 0 := (hV.neg_add_cancel v)
 
-theorem neg_unique_V (K V : Type*)
+lemma neg_unique_V (K V : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms K V) (v w : V) :
     v + w = 0 → w = -v := by
@@ -427,7 +427,7 @@ theorem neg_unique_V (K V : Type*)
     _ = -v + 0 := by rw [v_add_w_zero]
     _ = -v := add_zero_V K V hV (-v)
 
-theorem zero_smul_V (K V : Type*)
+lemma zero_smul_V (K V : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms K V) (v : V) :
     (0 : K) • v = 0 := by
@@ -435,18 +435,20 @@ theorem zero_smul_V (K V : Type*)
     calc
       (0 : K) • v + (0 : K) • v = (0 + 0 : K) • v := (hV.add_smul (0:K) (0:K) v).symm
       _ = (0: K) • v := by norm_num
-  exact self_add_self_imp_eq_zero K V hV (0:K) • v
+  exact self_add_self_imp_eq_zero K V hV ((0 : K) • v) zero_add_zero
 
-theorem neg_one_smul_V (K V : Type*)
+lemma neg_one_smul_V (K V : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (v : V) (hV : VectorSpaceAxioms K V) :
+    (hV : VectorSpaceAxioms K V) (v : V) :
     ((-1) : K) • v = -v := by
   have hneg : v + (-1 : K) • v = 0 := by
     calc
       v + (-1 : K) • v = (1 : K) • v + (-1 : K) • v := by rw [hV.one_smul v]
       _ = (1 + -1 : K) • v := (hV.add_smul (1:K) (-1:K) v).symm
       _ = (0 : K) • v := by norm_num
-      _ = 0
+      _ = 0 := (zero_smul_V K V hV v)
+  apply neg_unique_V K V hV v ((-1 : K) • v)
+  exact hneg
 
 variable {K V : Type*}
 variable [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
@@ -459,19 +461,14 @@ def IsVectorSubspace
     (zeroW : Zero (↥W))
     (negW : Neg (↥W))
     (smulW : SMul K (↥W)),
-
     @VectorSpaceAxioms K (↥W) _
       addW zeroW negW smulW ∧
-
     (∀ u v : ↥W,
       ((addW.add u v : ↥W) : V) =
         (u : V) + (v : V)) ∧
-
     (((zeroW.zero : ↥W) : V) = (0 : V)) ∧
-
     (∀ u : ↥W,
       ((negW.neg u : ↥W) : V) = -(u : V)) ∧
-
     (∀ (a : K) (u : ↥W),
       ((smulW.smul a u : ↥W) : V) =
         a • (u : V))
@@ -481,29 +478,31 @@ theorem subspace_criterion
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms K V)
     (W : Set V)
-    (zero_mem : (0 : V) ∈ W)
-    (add_mem :
+    (has_zero : (0 : V) ∈ W)
+    (add_close :
       ∀ u v : V, u ∈ W → v ∈ W → u + v ∈ W)
-    (smul_mem :
+    (smul_close :
       ∀ (a : K) (v : V), v ∈ W → a • v ∈ W) :
     IsVectorSubspace K W := by
-  let : Add (↥W) :=
+
+  let addW : Add (↥W) :=
     ⟨fun u v =>
       ⟨(u : V) + (v : V),
-        add_mem (u : V) (v : V) u.property v.property⟩⟩
+        add_close (u : V) (v : V) u.property v.property⟩⟩
 
-  let : Zero (↥W) :=
-    ⟨⟨0, zero_mem⟩⟩
+  let zeroW : Zero (↥W) :=
+    ⟨⟨0, has_zero⟩⟩
 
-  let : SMul K (↥W) :=
+  let smulKW : SMul K (↥W) :=
     ⟨fun a v =>
       ⟨a • (v : V),
-        smul_mem a (v : V) v.property⟩⟩
+        smul_close a (v : V) v.property⟩⟩
 
-  let : Neg (↥W) :=
+  let negW : Neg (↥W) :=
     ⟨fun v =>
-      ⟨-1•(v : V),
-        smul_mem -1 (v : V) v.property⟩⟩
+      ⟨(-v : V), by
+        rw [←neg_one_smul_V K V hV v]
+        exact smul_close (-1 : K) (v : V) v.property⟩⟩
 
   have W_is_vector_space : VectorSpaceAxioms K (↥W) :={
       add_assoc := by
@@ -539,8 +538,9 @@ theorem subspace_criterion
         apply Subtype.ext
         exact hV.add_smul a b u
     }
-  refine ⟨inferInstance, inferInstance, inferInstance, inferInstance, W_is_vector_space, ?_, ?_, ?_, ?_ ⟩
-  · intro u V
+
+  refine ⟨addW, zeroW, negW, smulKW, W_is_vector_space, ?_, ?_, ?_, ?_ ⟩
+  · intro u v
     rfl
   · rfl
   · intro u
