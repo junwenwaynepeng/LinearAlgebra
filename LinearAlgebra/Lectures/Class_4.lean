@@ -473,7 +473,7 @@ def IsVectorSubspace
       ((smulW.smul a u : ↥W) : V) =
         a • (u : V))
 
-theorem subspace_criterion
+theorem subspace_test
     {K V : Type*}
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms K V)
@@ -547,3 +547,130 @@ theorem subspace_criterion
     rfl
   · intro a u
     rfl
+
+/-- `y` is a twice-differentiable solution of
+    y'' + 2y' - 3y = 0. -/
+def IsODESolution (y : ℝ → ℝ) : Prop :=
+  ∃ y' y'' : ℝ → ℝ,
+    (∀ x, HasDerivAt y (y' x) x) ∧
+    (∀ x, HasDerivAt y' (y'' x) x) ∧
+    (∀ x, y'' x + 2 * y' x - 3 * y x = 0)
+
+def ODESolutions : Set (ℝ → ℝ) :=
+  {y | IsODESolution y}
+
+lemma ode_zero_mem :
+    (0 : ℝ → ℝ) ∈ ODESolutions := by
+  change IsODESolution (fun _ => 0)
+  refine ⟨(fun _ => 0), (fun _ => 0), ?_, ?_, ?_⟩
+  · intro x
+    simpa using
+      (hasDerivAt_const (x := x) (c := (0 : ℝ)))
+  · intro x
+    simpa using
+      (hasDerivAt_const (x := x) (c := (0 : ℝ)))
+  · intro x
+    simp
+
+lemma ode_add_mem
+    (y z : ℝ → ℝ)
+    (hy : y ∈ ODESolutions)
+    (hz : z ∈ ODESolutions) :
+    y + z ∈ ODESolutions := by
+  change IsODESolution (fun x => y x + z x)
+
+  rcases hy with ⟨y', y'', hy', hy'', hyEq⟩
+  rcases hz with ⟨z', z'', hz', hz'', hzEq⟩
+
+  refine
+    ⟨(fun x => y' x + z' x),
+     (fun x => y'' x + z'' x), ?_, ?_, ?_⟩
+
+  · intro x
+    exact (hy' x).fun_add (hz' x)
+
+  · intro x
+    exact (hy'' x).fun_add (hz'' x)
+
+  · intro x
+    linear_combination hyEq x + hzEq x
+
+lemma ode_smul_mem
+    (a : ℝ)
+    (y : ℝ → ℝ)
+    (hy : y ∈ ODESolutions) :
+    a • y ∈ ODESolutions := by
+  change IsODESolution (fun x => a * y x)
+
+  rcases hy with ⟨y', y'', hy', hy'', hyEq⟩
+
+  refine
+    ⟨(fun x => a * y' x),
+     (fun x => a * y'' x), ?_, ?_, ?_⟩
+
+  · intro x
+    exact HasDerivAt.const_mul a (hy' x)
+
+  · intro x
+    exact HasDerivAt.const_mul a (hy'' x)
+
+  · intro x
+    linear_combination a * hyEq x
+
+theorem ode_solutions_are_subspace :
+    IsVectorSubspace ℝ ODESolutions := by
+  exact
+    subspace_test
+      (F_is_vector_space ℝ)
+      ODESolutions
+      ode_zero_mem
+      ode_add_mem
+      ode_smul_mem
+
+def homogeneousSolutions : Set Vec3 :=
+  {v | v.x + 2 * v.y - v.z = 0}
+
+lemma homogeneous_zero_mem :
+    (0 : Vec3) ∈ homogeneousSolutions := by
+  change (0 : ℝ) + 2 * 0 - 0 = 0
+  norm_num
+
+lemma homogeneous_add_mem
+    (u v : Vec3)
+    (hu : u ∈ homogeneousSolutions)
+    (hv : v ∈ homogeneousSolutions) :
+    u + v ∈ homogeneousSolutions := by
+
+  change
+    (u.x + v.x) +
+      2 * (u.y + v.y) -
+      (u.z + v.z) = 0
+
+  change u.x + 2 * u.y - u.z = 0 at hu
+  change v.x + 2 * v.y - v.z = 0 at hv
+
+  linarith
+
+lemma homogeneous_smul_mem
+    (a : ℝ) (v : Vec3)
+    (hv : v ∈ homogeneousSolutions) :
+    a • v ∈ homogeneousSolutions := by
+
+  change
+    a * v.x +
+      2 * (a * v.y) -
+      a * v.z = 0
+
+  change v.x + 2 * v.y - v.z = 0 at hv
+
+  linear_combination a * hv
+
+theorem homogeneous_solutions_are_subspace :
+    IsVectorSubspace ℝ homogeneousSolutions := by
+  exact
+    subspace_test
+      V_is_vector_space
+      homogeneousSolutions
+      homogeneous_zero_mem
+      homogeneous_add_mem
+      homogeneous_smul_mem
