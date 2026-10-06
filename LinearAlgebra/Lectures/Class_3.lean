@@ -1,5 +1,5 @@
 import Mathlib
-
+/-!-/
 open Matrix
 open scoped BigOperators
 open scoped Matrix
@@ -14,14 +14,14 @@ example (f g : ℝ → ℝ)
   funext x
   exact h x
 
-/-* Lemma 2.1 - Assume that $A$ and $B$ are matrices of sizes $m\times n$ and $p\times q$.
-If $AB = BA$, then $m=n=p=q$; that is, $A$ and $B$ are square matrices of the same size.
+/- **Lemma 2.1** - Assume that A and B are matrices of sizes m×n and p×q.
+If AB = BA, then m=n=p=q; that is, A and B are square matrices of the same size.
 
-poof. By assumption, $A$ is an $m\times n$ matrix, and $B$ is a $p\times q$ matrix.
-Since $AB$ and $BA$ are well-defined, $n=p$ and $q=m$.
-Then $AB$ is an $m\times q$ matrix and $BA$ is a $p\times n$ matrix.
-Finally, the assumption $AB = BA$ implies $m\times q = p\times n$.
-Thus, $m=p$ and $n=q$. Therefore, $A$ and $B$ are square matrices of the same size.
+*proof.* By assumption, A is an m×n matrix, and B is a p×q matrix.
+Since AB and BA are well-defined, n=p and q=m.
+Then AB is an m×q matrix and BA is a p×n matrix.
+Finally, the assumption AB = BA implies m×q = p×n.
+Thus, m=p and n=q. Therefore, A and B are square matrices of the same size.
 -/
 
 lemma same_size_of_commuting_dimensions'
@@ -37,114 +37,65 @@ lemma same_size_of_commuting_dimensions'
     · exact hBA
     · exact hrow
 
+/- **Proposition 2.1** Let A be an n by n matrix. If A commutes with any n by n matrix,
+then A=cIₙ for some number c.
 
-/- Proposition 2.2 Let $A$ be an $n$ by $n$ matrix. If $A$ commutes with any $n$ by $n$ matrix, then $A=cI_n$ for some number $c$.
-
-proof. Let $U_i$ be the matrix whose $(i,i)$-entry is $1$ and whose other entries are $0$.
-Then $AU_i=U_iA$ implies that the $(i,j)$-entry of $A$ is $0$ for any $i\neq j$. Thus, $A$ is a diagonal matrix.
-Now let $U_{ij}$ be the matrix whose $(i,j)$-entry is $1$ and whose other entries are $0$.
-Then $AU_{ij}=U_{ij}A$ implies that the $(i,i)$-entry of $A$ is equal to the $(j,j)$-entry of $A$.
-Thus, all diagonal entries of $A$ are equal, and hence $A=cI_n$ for some number $c$.
+*proof.* Let Uᵢ be the matrix whose (i,i)-entry is 1 and whose other entries are 0.
+Then AUᵢ=UᵢA implies that the (i,j)-entry of A is 0 for any i≠j. Thus, A is a diagonal matrix.
+Now let Uᵢⱼ be the matrix whose (i,j)-entry is 1 and whose other entries are 0.
+Then AUᵢⱼ=UᵢⱼA implies that the (i,i)-entry of A is equal to the (j,j)-entry of A.
+Thus, all diagonal entries of A are equal, and hence A=cIₙ for some number c.
 -/
 
-
-lemma proposition_2_2
-    (n : ℕ) (hn : 0 < n)
+lemma proposition_2_1
+    {n : ℕ} (hn : 0 < n)
     (A : Matrix (Fin n) (Fin n) ℂ)
     (hcomm :
       ∀ B : Matrix (Fin n) (Fin n) ℂ,
         A * B = B * A) :
-    ∃ c : ℂ, A = (Matrix.scalar (Fin n)) c := by
+    ∃ c : ℂ, A = c•1 := by
   /-
   Step 1.
-  Use U_i, the matrix whose (i,i)-entry is 1
+  Use Uᵢ, the matrix whose (i,i)-entry is 1
   and whose other entries are 0.
   -/
-  have hoff :
+  have hoff :         --Claim Aᵢⱼ = 0 for i ≠ j
       ∀ i j : Fin n, i ≠ j → A i j = 0 := by
-    intro i j hij
-    let U : Matrix (Fin n) (Fin n) ℂ :=
+    intro i j hij     -- Let i and j be distinct indices in Fin n
+    let U : Matrix (Fin n) (Fin n) ℂ :=   -- Let U be the matrix whose (i,j)-entry is 1 and whose other entries are 0.
       Matrix.single i i 1
-    have hU : A * U = U * A := hcomm U
-    have hentry : (A * U) i j = (U * A) i j :=
+    have hU : A * U = U * A := hcomm U  -- By assumption, A commutes with U.
+    have hentry : (A * U) i j = (U * A) i j := --Thus, the (i,j)-entry of AU is equal to the (i,j)-entry of UA.
       congrArg (fun M => M i j) hU
-    simp [Matrix.mul_apply, U, Matrix.single, hij] at hentry
+    simp only [U] at hentry       -- Unfold the definition of U in the equation above.
+    simp only [Matrix.mul_apply, Matrix.single] at hentry   -- Unfold the definition of matrix multiplication in the equation above.
+    simp? [hij] at hentry  -- Use the fact that i ≠ j to simplify the equation above.
     symm
     exact hentry
-    --simpa [Matrix.mul_apply, U, Matrix.single, hij] using hentry.symm
-  let i0 : Fin n := ⟨0, hn⟩
-  have hdiag : ∀ i : Fin n, A i i = A i0 i0 := by
-    intro i
-    let U : Matrix (Fin n) (Fin n) ℂ :=
+  /-
+  Step 2.
+  Use Uᵢᵢ₀, the matrix whose (i,i₀)-entry is 1
+  and whose other entries are 0.
+  -/
+  let i0 : Fin n := ⟨0, hn⟩  -- Let i₀ be the first index in Fin n, i.e. i₀ = 0.
+  have hdiag : ∀ i : Fin n, A i i = A i0 i0 := by -- Claim that Aᵢᵢ = Aᵢ₀ᵢ₀ for all i in Fin n.
+    intro i       -- Let i be an index in Fin n.
+    let U : Matrix (Fin n) (Fin n) ℂ :=  -- Let U be the matrix whose (i,i₀)-entry is 1 and whose other entries are 0.
       Matrix.single i i0 1
     have hU : A * U = U * A := hcomm U
     have hentry : (A * U) i i0 = (U * A) i i0 :=
       congrArg (fun M => M i i0) hU
-    simpa [Matrix.mul_apply, U, Matrix.single] using hentry
-  let c := A i0 i0
-  refine ⟨c, ?_⟩
-  ext i j
-  by_cases hij : i = j
-  · subst j
-    simpa [Matrix.scalar] using hdiag i
-  · rw [hoff i j hij]
-    simp [Matrix.scalar, hij]
+    simpa [mul_apply, U, single] using hentry
+  use A i0 i0   -- Let c = Aᵢ₀ᵢ₀. Then A = cIₙ.
+  ext i j       -- Let i and j be indices in Fin n. We need to show that Aᵢⱼ = cIₙᵢⱼ.
+  by_cases hij : i = j  --  We consider two cases: i = j and i ≠ j.
+  · subst j     --  If i = j, then Aᵢⱼ = Aᵢᵢ = c = cIₙᵢⱼ. After simplification, we have Aᵢⱼ = cIₙᵢⱼ.
+    simp?
+    exact hdiag i
+  · rw [hoff i j hij] -- If i ≠ j, then Aᵢⱼ = 0 = cIₙᵢⱼ. After simplification, we have Aᵢⱼ = cIₙᵢⱼ.
+    simp [hij]
 
-
-
-
-theorem matrix_assoc_basic
-  {m n p q : Type*} [Fintype n] [Fintype p] (A : Matrix m n ℂ) (B : Matrix n p ℂ) (C : Matrix p q ℂ) :
-    (A * B) * C = A * (B * C) := by
-  -- Step 1: Two matrices are equal if all their entries (i, l) are equal
-  ext i l
-  -- Step 2: Unfold the definition of matrix multiplication on both sides
-  -- This replaces the '*' with explicit summation symbols (Finset.sum)
-  simp [mul_apply]
-  -- Step 3: Distribute the C_kl entry into the inner sum on the left-hand side
-  simp_rw [Finset.sum_mul]
-  -- Step 4: Distribute the A_ij entry into the inner sum on the right-hand side
-  simp_rw [Finset.mul_sum]
-  -- Step 5: Swap the order of summation (∑ j, ∑ k ...) to match (∑ k, ∑ j ...)
-  -- and use the commutativity of scalar multiplication (A * B * C = A * (B * C))
-  rw [Finset.sum_comm]
-  -- Step 6: Ensure the terms inside the sums match exactly using associativity of α
-  congr 1 with k
-  congr 1 with j
-  ring
-
-
-def IsInverse
-    {n : ℕ}
-    (A B : Matrix (Fin n) (Fin n) ℂ) : Prop :=
-  A * B = 1 ∧ B * A = 1
-
-def IsInvertible
-    {n : ℕ}
-    (A : Matrix (Fin n) (Fin n) ℂ) : Prop :=
-  ∃ B, IsInverse A B
-
-theorem inverse_unique
-    {n : ℕ}
-    (A B C : Matrix (Fin n) (Fin n) ℂ)
-    (hB : IsInverse A B)
-    (hC : IsInverse A C) :
-    B = C := by
-  unfold IsInverse at *
-  rcases hB with ⟨hAB, hBA⟩
-  /-
-  cases hB with
-  |  intro hAB hBA
-  -/
-  rcases hC with ⟨hAC, hCA⟩
-  calc
-    B = 1 * B := by rw [Matrix.one_mul]
-    _ = (C * A) * B := by rw [hCA]
-    _ = C * (A * B) := by exact matrix_assoc_basic C A B
-    _ = C * 1 := by rw [hAB]
-    _ = C := by rw [Matrix.mul_one]
-
-
+/-In-Class-Practice-/
 def MyTrans
     {m n α : Type}(A : Matrix m n α) : Matrix n m α :=
   fun i j => A j i
@@ -165,48 +116,130 @@ example {m n : Type} (A : Matrix m n ℚ) : Aᵀᵀ = A := by
 
 example {m n k : ℕ} (A : Matrix (Fin m) (Fin n) ℚ) (B : Matrix (Fin n) (Fin k) ℚ) :
     (A * B)ᵀ = Bᵀ * Aᵀ := by
-  ext i j
-  simp [Matrix.mul_apply]
-  simp [mul_comm]
-  --simp [Matrix.mul_apply, Finset.sum_comm, mul_comm]
+  sorry
 
 example {m n k l : ℕ}
     (A : Matrix (Fin m) (Fin n) ℚ)
     (B : Matrix (Fin n) (Fin k) ℚ)
     (C : Matrix (Fin k) (Fin l) ℚ) :
     (A * B * C)ᵀ = Cᵀ * Bᵀ * Aᵀ := by
+  sorry
+--hint:transpose_apply, Finset.sum_mul, Finset.sum_comm, Finset.sum_congr
+
+/- **Associativity** Let A, B, and C be m×n, n×p, p×q matrices respectively.
+Then (AB)C = A(BC).
+
+*proof.* Let i and l be indices in Fin m and Fin q respectively.
+Then our goal is to show that ((AB)C)ᵢⱼ = (A(BC))ᵢⱼ.
+After expanding the definitions of matrix multiplication, we have
+((AB)C)ᵢⱼ = ∑ₖ (∑ₗ Aᵢₗ Bₗₖ) Cₖⱼ and (A(BC))ᵢⱼ = ∑ₖ Aᵢₖ (∑ⱼ Bₖⱼ Cⱼₗ).
+The left-hand side is ∑ₖ ∑ₗ (Aᵢₗ Bₗₖ) Cₖⱼ
+The right-hand side is ∑ₖ ∑ₗAᵢₖ (Bₖₗ Cₗⱼ)
+Since the sums are over finite indices, the double sums are commutative.
+Thus, we have ∑ₖ ∑ₗ (Aᵢₗ Bₗₖ) Cₖⱼ = ∑ₗ ∑ₖ Aᵢₖ (Bₖₗ Cₗⱼ).
+Set the index of outer sum to be k and the index of the inner sum to be l.
+Then we have ((AB)C)ᵢⱼ = (A(BC))ᵢⱼ by the associativity (Aᵢₛ Bₛₜ) Cₜⱼ = Aᵢₛ (Bₛₜ Cₜⱼ).
+-/
+
+theorem matrix_assoc_basic
+  {m n p q : Type*} [Fintype n] [Fintype p] (A : Matrix m n ℂ) (B : Matrix n p ℂ) (C : Matrix p q ℂ) :
+    (A * B) * C = A * (B * C) := by
   ext i j
-  simp only[transpose_apply, mul_apply]
-  simp only [Finset.sum_mul]
+  simp only [mul_apply]
+  simp_rw [Finset.sum_mul]
+  simp_rw [Finset.mul_sum]
   rw [Finset.sum_comm]
-  apply Finset.sum_congr rfl
-  intro x hx
-  apply Finset.sum_congr rfl
-  intro x_1 hx_1
+  congr 1 with s; congr 1 with t
   ring
 
+/-**Definition 2.1** Let A and B be n×n matrices.
+we say B is inverse of A if AB = BA = Iₙ.
+In this case, we call A invertible and denote its inverse by A⁻¹.
+-/
+def IsInverse
+    {n : ℕ}
+    (A B : Matrix (Fin n) (Fin n) ℂ) : Prop :=
+  A * B = 1 ∧ B * A = 1
+
+def IsInvertible
+    {n : ℕ}
+    (A : Matrix (Fin n) (Fin n) ℂ) : Prop :=
+  ∃ B, IsInverse A B
+
+/-**Lemma 2.2** Let A be an n×n matrix. If A is invertible, then its inverse is unique.
+
+*proof.* Since A is invertible, there exists B: a matrix B such that hB: AB = BA = Iₙ.
+To show that the inverse is unique, we need to show
+1. there is a matrix;
+2. this matrix is an inverse of A;
+3. if C is another matrix such that hC: AC = CA = Iₙ, then B = C.
+Goal 1 is satisfied by the existence of B. Goal 2 is satisfied by hB.
+To show Goal 3, we assume that C is another matrix such that hC: AC = CA = Iₙ. Then we have
+  C = Iₙ * C
+    = (B * A) * C by BA = Iₙ
+    = B * (A * C) by associativity of matrix multiplication
+    = B * Iₙ by AC = Iₙ
+    = B
+Thus, B = C. Therefore, the inverse of A is unique.
+-/
+
+lemma inverse_unique
+    {n : ℕ}
+    (A : Matrix (Fin n) (Fin n) ℂ)
+    (hA : IsInvertible A) :
+    ∃! B, IsInverse A B := by
+  unfold IsInvertible at *
+  unfold IsInverse at *
+  rcases hA with ⟨B, hB⟩
+  refine ⟨?_, ?_, ?_⟩
+  · use B
+  · exact hB
+  · intro C hC
+    rcases hC with ⟨hAC, hCA⟩
+    calc
+      C = 1 * C := by rw [Matrix.one_mul]
+      _ = (B * A) * C := by rw [hB.2]
+      _ = B * (A * C) := by exact matrix_assoc_basic B A C
+      _ = B * 1 := by rw [hAC]
+      _ = B := by rw [Matrix.mul_one]
+
+/-In-Class-Practice-/
+lemma inverse_unique_practice
+    {n : ℕ}
+    (A B C : Matrix (Fin n) (Fin n) ℂ)
+    (hB : IsInverse A B)
+    (hC : IsInverse A C) :
+    B = C := by
+  sorry
+
+/-**Proposition 2.3.** If A ∈ Mₙ(F) is invertible, then
+for every b ∈ Fⁿ, the system Ax=b has the unique solution
+
+*proof.* Since A is invertible, there exists B: a matrix B such that hAB: AB = Iₙ and hBA: BA = Iₙ.
+To show that the system Ax=b has a unique solution, we need to show
+1. there is an x ∈ Fⁿ which is a solution;
+2. this solution is unique.
+To show the first claim, we let x = Bb. Then Ax = A(Bb) = (AB)b = Iₙb = b. Thus, x is a solution.
+To show the second claim, we assume that y is another solution such that Ay = b.
+Then we have
+  y = Iₙy
+    = (BA)y by hBA
+    = B(Ay) by associativity of matrix multiplication
+    = Bb by Ay = b
+Thus, y = Bb. Therefore, the solution is unique.
+
+-/
 theorem solution_unique (n : ℕ) (A : Matrix (Fin n) (Fin n) ℂ) (hA : IsInvertible A) (b : Fin n → ℂ) :
     ∃! x : Fin n → ℂ, A *ᵥ x = b := by
   rcases hA with ⟨B, hAB, hBA⟩
-  by_cases hb : b = (0 : Fin n → ℂ)
-  · subst b
-    refine ⟨0, ?_, ?_⟩
-    · simp
-    · intro y hy
-      calc
-        y = (1 :  Matrix (Fin n) (Fin n) ℂ) *ᵥ y := by rw [Matrix.one_mulVec]
-        _ = (B * A) *ᵥ y := by rw [hBA]
-        _ = B *ᵥ (A *ᵥ y) := by rw [mulVec_mulVec]
-        _ = B *ᵥ 0 := by  rw [hy]
-        _ = 0 := by simp
-  · refine ⟨B *ᵥ b, ?_, ?_⟩
-    · calc
-      A *ᵥ (B*ᵥ b) = (A * B) *ᵥ b := by rw [mulVec_mulVec]
-      _ = (1 : Matrix (Fin n) (Fin n) ℂ) *ᵥ b := by rw [hAB]
-      _ = b := by rw [Matrix.one_mulVec]
-    · intro y hy
-      calc
-      y = (1 :  Matrix (Fin n) (Fin n) ℂ) *ᵥ y := by rw [Matrix.one_mulVec]
-      _ = (B * A) *ᵥ y := by rw [hBA]
-      _ = B *ᵥ (A *ᵥ y) := by rw [mulVec_mulVec]
-      _ = B *ᵥ b := by rw [hy]
+  refine ⟨B *ᵥ b, ?_, ?_⟩
+  · calc
+    A *ᵥ (B*ᵥ b) = (A * B) *ᵥ b := by rw [mulVec_mulVec]
+    _ = 1 *ᵥ b := by rw [hAB]
+    _ = b := by rw [Matrix.one_mulVec]
+  · intro y hy
+    calc
+    y = 1 *ᵥ y := by rw [Matrix.one_mulVec]
+    _ = (B * A) *ᵥ y := by rw [hBA]
+    _ = B *ᵥ (A *ᵥ y) := by rw [mulVec_mulVec]
+    _ = B *ᵥ b := by rw [hy]
