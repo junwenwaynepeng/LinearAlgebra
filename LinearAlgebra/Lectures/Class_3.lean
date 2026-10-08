@@ -204,6 +204,7 @@ lemma inverse_unique
       _ = B := by rw [Matrix.mul_one]
 
 /-In-Class-Practice-/
+
 lemma inverse_unique_practice
     {n : ℕ}
     (A B C : Matrix (Fin n) (Fin n) ℂ)
@@ -227,9 +228,11 @@ Then we have
     = B(Ay) by associativity of matrix multiplication
     = Bb by Ay = b
 Thus, y = Bb. Therefore, the solution is unique.
-
 -/
-theorem solution_unique (n : ℕ) (A : Matrix (Fin n) (Fin n) ℂ) (hA : IsInvertible A) (b : Fin n → ℂ) :
+
+theorem solution_unique
+  (n : ℕ) (A : Matrix (Fin n) (Fin n) ℂ)
+  (hA : IsInvertible A) (b : Fin n → ℂ) :
     ∃! x : Fin n → ℂ, A *ᵥ x = b := by
   rcases hA with ⟨B, hAB, hBA⟩
   refine ⟨B *ᵥ b, ?_, ?_⟩
