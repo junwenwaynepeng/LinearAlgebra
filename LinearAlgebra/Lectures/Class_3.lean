@@ -95,7 +95,7 @@ lemma proposition_2_1
   · rw [hoff i j hij] -- If i ≠ j, then Aᵢⱼ = 0 = cIₙᵢⱼ. After simplification, we have Aᵢⱼ = cIₙᵢⱼ.
     simp [hij]
 
-/-In-Class-Practice-/
+
 def MyTrans
     {m n α : Type}(A : Matrix m n α) : Matrix n m α :=
   fun i j => A j i
@@ -114,6 +114,7 @@ example {m n : Type} (A : Matrix m n ℚ) : MyTrans A = Aᵀ :=by
 example {m n : Type} (A : Matrix m n ℚ) : Aᵀᵀ = A := by
   rfl
 
+/-In-Class-Practice-/
 example {m n k : ℕ} (A : Matrix (Fin m) (Fin n) ℚ) (B : Matrix (Fin n) (Fin k) ℚ) :
     (A * B)ᵀ = Bᵀ * Aᵀ := by
   sorry
