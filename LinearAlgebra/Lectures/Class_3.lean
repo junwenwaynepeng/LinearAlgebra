@@ -145,11 +145,23 @@ Then we have ((AB)C)ᵢⱼ = (A(BC))ᵢⱼ by the associativity (Aᵢₛ Bₛₜ
 theorem matrix_assoc_basic
   {m n p q : Type*} [Fintype n] [Fintype p] (A : Matrix m n ℂ) (B : Matrix n p ℂ) (C : Matrix p q ℂ) :
     (A * B) * C = A * (B * C) := by
-  ext i j
+  ext i l
   simp only [mul_apply]
+  change
+    (∑ k : p, (∑ j : n, A i j * B j k) * C k l) =
+      ∑ j : n, A i j * (∑ k : p, B j k * C k l)
   simp_rw [Finset.sum_mul]
+  change
+    (∑ k : p, ∑ j : n, A i j * B j k * C k l) =
+      ∑ j : n, A i j * (∑ k : p, B j k * C k l)
   simp_rw [Finset.mul_sum]
+  change
+    ∑ k : p, ∑ j : n, A i j * B j k * C k l =
+      ∑ j : n, ∑ k : p, A i j *  (B j k * C k l)
   rw [Finset.sum_comm]
+  change
+    ∑ j : n, ∑ k : p, A i j * B j k * C k l =
+      ∑ j : n, ∑ k : p, A i j *  (B j k * C k l)
   congr 1 with s; congr 1 with t
   ring
 
