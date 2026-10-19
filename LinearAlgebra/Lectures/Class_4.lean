@@ -417,44 +417,43 @@ lemma cancellation_law (V K : Type*)
     _ = v + 0 := by rw [hnegw]
     _ = v := add_zero_V V K hV v
 
-
-
 lemma neg_unique_V (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K) (u : V) :
-    ∃! v : V, u + v = 0  := by
-  obtain ⟨neg_u, hnegu⟩ := hV.neg_add_cancel u
-  refine ⟨neg_u, ?_, ?_⟩
-  · rw [hV.add_comm] at hnegu
-    exact hnegu
-  · intro w hw
-    calc
-      w = 0 + w := (hV.zero_add w).symm
-      _ = (neg_u + u) + w := by rw [hnegu]
-      _ = neg_u + (u + w) := hV.add_assoc neg_u u w
-      _ = neg_u + 0 := by rw [hw]
-      _ = neg_u := add_zero_V V K hV neg_u
+    (hV : VectorSpaceAxioms V K) (v : V) :
+    ∃! u : V, u + v = 0  := by
+  obtain ⟨neg_v, hnegv⟩ := hV.neg_add_cancel v
+  refine ⟨neg_v, hnegv, ?_⟩
+  intro w hw
+  calc
+    w = 0 + w := (hV.zero_add w).symm
+    _ = (neg_v + v) + w := by rw [hnegv]
+    _ = neg_v + (v + w) := hV.add_assoc neg_v v w
+    _ = neg_v + 0 := by rw [hV.add_comm] at hw; rw[hw]
+    _ = neg_v := add_zero_V V K hV neg_v
 
-
-lemma add_neg_cancel_V (V K : Type*)
+lemma zero_unique_V (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K) (v : V) :
-    v + -v = 0 := by
-    rw [hV.add_comm]
-    exact hV.neg_add_cancel v
+    ∃! u, u + v = v := by
+  use 0
+  refine ⟨hV.zero_add v, ?_⟩
+  intro zero' hzero'
+  have hzu : zero' + v = 0 + v := by
+    rw [hzero']
+    rw [hV.zero_add v]
+  exact cancellation_law V K hV zero' 0 v hzu
 
 lemma self_add_self_imp_eq_zero (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K) (v : V) (hv : v + v = v) :
     v = 0 := by
+  obtain ⟨u, hu⟩ := hV.neg_add_cancel v
   calc
     v = 0 + v := (hV.zero_add v).symm
-    _ = -v + v + v := by rw [hV.neg_add_cancel v]
-    _ = -v + (v + v) := (hV.add_assoc (-v) v v)
-    _ = -v + v := by rw [hv]
-    _ = 0 := (hV.neg_add_cancel v)
-
-
+    _ = u + v + v := by rw [hu]
+    _ = u + (v + v) := (hV.add_assoc u v v)
+    _ = u + v := by rw [hv]
+    _ = 0 := by exact hu
 
 lemma zero_smul_V (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
@@ -469,12 +468,19 @@ lemma zero_smul_V (V K : Type*)
 lemma neg_one_smul_V (K V : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K) (v : V) :
-    ((-1) : K) • v = -v := by
-  have hneg : v + (-1 : K) • v = 0 := by
+    ((-1) : K) • v + v = 0 := by
+  calc
+    (-1 : K) • v + v = (-1 : K) • v + (1 : K) • v := by rw [hV.one_smul v]
+    _ = (-1 + 1 : K) • v := (hV.add_smul (-1:K) (1:K) v).symm
+    _ = (0 : K) • v := by norm_num
+    _ = 0 := (zero_smul_V V K hV v)
+
+lemma smul_zero_V (V K : Type*)
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms V K) (a : K) :
+    a • (0 : V) = 0 := by
+  have double_a0 : a • (0 : V) + a • (0 : V) = a • (0 : V) := by
     calc
-      v + (-1 : K) • v = (1 : K) • v + (-1 : K) • v := by rw [hV.one_smul v]
-      _ = (1 + -1 : K) • v := (hV.add_smul (1:K) (-1:K) v).symm
-      _ = (0 : K) • v := by norm_num
-      _ = 0 := (zero_smul_V V K hV v)
-  apply neg_unique_V V K hV v ((-1 : K) • v)
-  exact hneg
+      a • (0 : V) + a • (0 : V) = a • (0 + 0) := (hV.smul_add a (0 : V) (0 : V)).symm
+      _ = a • 0 := by rw [(hV.zero_add 0)]
+  exact self_add_self_imp_eq_zero V K hV a • (0 : V) double_a0
