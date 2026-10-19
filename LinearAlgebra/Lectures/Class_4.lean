@@ -431,6 +431,9 @@ lemma neg_unique_V (V K : Type*)
     _ = neg_v + 0 := by rw [hV.add_comm] at hw; rw[hw]
     _ = neg_v := add_zero_V V K hV neg_v
 
+noncomputable def min_u (u : V) : V :=
+  Classical.choose (neg_unique_V V ℝ V_is_vector_space u).exists
+
 lemma zero_unique_V (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K) (v : V) :
@@ -442,6 +445,9 @@ lemma zero_unique_V (V K : Type*)
     rw [hzero']
     rw [hV.zero_add v]
   exact cancellation_law V K hV zero' 0 v hzu
+
+noncomputable def zero (u : V) : V :=
+  Classical.choose (zero_unique_V V ℝ V_is_vector_space u).exists
 
 lemma self_add_self_imp_eq_zero (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
