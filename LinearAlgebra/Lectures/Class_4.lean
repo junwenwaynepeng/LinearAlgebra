@@ -483,4 +483,4 @@ lemma smul_zero_V (V K : Type*)
     calc
       a • (0 : V) + a • (0 : V) = a • (0 + 0) := (hV.smul_add a (0 : V) (0 : V)).symm
       _ = a • 0 := by rw [(hV.zero_add 0)]
-  exact self_add_self_imp_eq_zero V K hV a • (0 : V) double_a0
+  exact self_add_self_imp_eq_zero V K hV (a • (0 : V)) double_a0
