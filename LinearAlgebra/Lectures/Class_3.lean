@@ -183,7 +183,7 @@ example {n : ℕ}
     (A B : Matrix (Fin n) (Fin n) ℂ)
     (hAB : IsInverse A B) :
     IsInverse B A := by
-  trivial
+  sorry
 
 /-**Lemma 2.2** Let A be an n×n matrix. If A is invertible, then its inverse is unique.
 
