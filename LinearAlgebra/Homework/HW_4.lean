@@ -2,26 +2,6 @@ import Mathlib
 
 /-!
 # Homework 4 — Matrices and Vector-Space Reasoning
-
-Based only on Lectures 1–4. Homework N uses Lectures 1 through N,
-unless a different scope is explicitly requested.
-
-Six questions: 2 basic, 2 medium, 2 hard. Total: 100 points.
-Estimated working time: 150 minutes, plus time to review your proofs.
-
-Replace the six exercise proof holes with complete Lean proofs.
-Keep the theorem statements and supplied definitions unchanged.
-Add a short mathematical explanation in a comment above each proof.
-You may introduce auxiliary lemmas and use earlier questions once proved.
-
-Use the techniques from class: intro, exact, apply, constructor, rcases,
-use, rw, change, unfold, congrArg, funext, ext, fin_cases, have, calc,
-by_cases, by_contra, simp, norm_num, ring, and linarith.
-The library facts specifically mentioned below are also allowed.
-Do not use an existing theorem that directly states an exercise's conclusion.
-
-This file supplies its own required course definitions in a namespace.
-To make a personal working copy, copy this file into MyWork/.
 -/
 
 namespace Homework4
@@ -31,7 +11,7 @@ open scoped BigOperators
 
 /-!
 ## Question 1 — A concrete failure of commutativity
-Basic · 10 points · about 10 minutes
+Basic · 10 points
 
 Objective: connect matrix multiplication with entry computations and
 a proof of inequality.
@@ -63,8 +43,6 @@ theorem q1_noncommuting : P * Q ≠ Q * P := by
 
 /-!
 ## Question 2 — Symmetry of a combination of function vectors
-Basic · 10 points · about 15 minutes
-
 Objective: use pointwise vector operations and universal hypotheses.
 
 A function f is even when f (-x) = f x for every real x.
@@ -90,8 +68,6 @@ theorem q2_even_combination
 
 /-!
 ## Question 3 — Solving a system with a self-inverse matrix
-Medium · 15 points · about 20 minutes
-
 Objective: turn a matrix identity into an equivalence describing solutions.
 
 Assume A * A = I. Show that A x = b holds exactly when x = A b.
@@ -139,8 +115,6 @@ structure VectorSpaceAxioms
 
 /-!
 ## Question 4 — Cancellation of a nonzero scalar
-Medium · 15 points · about 25 minutes
-
 Objective: derive a new vector-space law from the stated axioms.
 
 If a ≠ 0 and a • u = a • v, prove u = v.
@@ -204,47 +178,37 @@ theorem q5_commuting_inverse
   sorry
 
 /-!
-## Question 6 — The vector space of rectangular matrices
+## Question 6 — A vector equation has exactly one solution
 Hard · 25 points · about 45 minutes
 
-Objective: verify all eight vector-space axioms for a new example,
-following the constructions in Lecture 4.
+Objective: synthesize additive inverses, scalar inverses, and uniqueness
+using only the course's explicit axioms.
 
-For arbitrary natural numbers m and n, let M be the set of all real
-m × n matrices. Equip M with its usual entrywise operations:
+For a nonzero scalar a and vectors u,w, prove there is exactly one v
+such that a • v + u = w. The notation ∃! asks for a witness, a proof
+that it solves the equation, and a proof that any other solution equals it.
 
-- (A + B) i j = A i j + B i j;
-- (0 : M) i j = 0;
-- (-A) i j = -(A i j);
-- (a • A) i j = a * A i j for a real scalar a.
+You may reuse Question 4. Additive cancellation and v + 0 = v may be
+derived as in Class 4. The field identity mul_inv_cancel₀ ha states
+a * a⁻¹ = 1.
 
-Prove that M is a vector space over ℝ by constructing the supplied
-VectorSpaceAxioms structure. Verify each of its eight fields:
-add_comm, add_assoc, zero_add, neg_add_cancel, one_smul, mul_smul,
-smul_add, and add_smul.
-
-For each axiom, reduce the matrix equality to equality of entries with
-ext i j or funext i j, then prove the scalar identity. Use change,
-simp, or ring as appropriate. For neg_add_cancel, explicitly supply
-an additive inverse matrix before checking its entries. Show the entrywise
-arguments rather than citing the corresponding matrix-level laws.
-
-Hint: a proof may begin with
-  refine { add_comm := ?_, add_assoc := ?_, zero_add := ?_,
-    neg_add_cancel := ?_, one_smul := ?_, mul_smul := ?_,
-    smul_add := ?_, add_smul := ?_ }
-
-The statement includes rectangular matrices and zero-sized dimensions.
+Important: obtain an additive inverse of u using hV.neg_add_cancel u.
+Do not assume that the arbitrary Neg instance on V supplies this inverse.
+The proof should work without installing an AddGroup or Module instance.
 
 References:
-- LinearAlgebra/Lectures/Class_1.lean, §2 "A matrix in Lean".
-- LinearAlgebra/Lectures/Class_2.lean, §14 "Matrix as functions".
-- LinearAlgebra/Lectures/Class_4.lean, VectorSpaceAxioms,
-  V_is_vector_space, and F_is_vector_space.
+- LinearAlgebra/Lectures/Class_2.lean, §7 "Existential statements".
+- LinearAlgebra/Lectures/Class_3.lean, solution_unique.
+- LinearAlgebra/Lectures/Class_4.lean, VectorSpaceAxioms, add_zero_V,
+  cancellation_law, and neg_unique_V.
 -/
 
-theorem q6_matrix_vector_space (m n : ℕ) :
-    VectorSpaceAxioms (Matrix (Fin m) (Fin n) ℝ) ℝ := by
+theorem q6_unique_vector_solution
+    {V K : Type*}
+    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms V K)
+    (a : K) (ha : a ≠ 0) (u w : V) :
+    ∃! v : V, a • v + u = w := by
   sorry
 
 end Homework4
