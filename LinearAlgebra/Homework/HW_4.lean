@@ -204,37 +204,47 @@ theorem q5_commuting_inverse
   sorry
 
 /-!
-## Question 6 — A vector equation has exactly one solution
+## Question 6 — The vector space of rectangular matrices
 Hard · 25 points · about 45 minutes
 
-Objective: synthesize additive inverses, scalar inverses, and uniqueness
-using only the course's explicit axioms.
+Objective: verify all eight vector-space axioms for a new example,
+following the constructions in Lecture 4.
 
-For a nonzero scalar a and vectors u,w, prove there is exactly one v
-such that a • v + u = w. The notation ∃! asks for a witness, a proof
-that it solves the equation, and a proof that any other solution equals it.
+For arbitrary natural numbers m and n, let M be the set of all real
+m × n matrices. Equip M with its usual entrywise operations:
 
-You may reuse Question 4. Additive cancellation and v + 0 = v may be
-derived as in Class 4. The field identity mul_inv_cancel₀ ha states
-a * a⁻¹ = 1.
+- (A + B) i j = A i j + B i j;
+- (0 : M) i j = 0;
+- (-A) i j = -(A i j);
+- (a • A) i j = a * A i j for a real scalar a.
 
-Important: obtain an additive inverse of u using hV.neg_add_cancel u.
-Do not assume that the arbitrary Neg instance on V supplies this inverse.
-The proof should work without installing an AddGroup or Module instance.
+Prove that M is a vector space over ℝ by constructing the supplied
+VectorSpaceAxioms structure. Verify each of its eight fields:
+add_comm, add_assoc, zero_add, neg_add_cancel, one_smul, mul_smul,
+smul_add, and add_smul.
+
+For each axiom, reduce the matrix equality to equality of entries with
+ext i j or funext i j, then prove the scalar identity. Use change,
+simp, or ring as appropriate. For neg_add_cancel, explicitly supply
+an additive inverse matrix before checking its entries. Show the entrywise
+arguments rather than citing the corresponding matrix-level laws.
+
+Hint: a proof may begin with
+  refine { add_comm := ?_, add_assoc := ?_, zero_add := ?_,
+    neg_add_cancel := ?_, one_smul := ?_, mul_smul := ?_,
+    smul_add := ?_, add_smul := ?_ }
+
+The statement includes rectangular matrices and zero-sized dimensions.
 
 References:
-- LinearAlgebra/Lectures/Class_2.lean, §7 "Existential statements".
-- LinearAlgebra/Lectures/Class_3.lean, solution_unique.
-- LinearAlgebra/Lectures/Class_4.lean, VectorSpaceAxioms, add_zero_V,
-  cancellation_law, and neg_unique_V.
+- LinearAlgebra/Lectures/Class_1.lean, §2 "A matrix in Lean".
+- LinearAlgebra/Lectures/Class_2.lean, §14 "Matrix as functions".
+- LinearAlgebra/Lectures/Class_4.lean, VectorSpaceAxioms,
+  V_is_vector_space, and F_is_vector_space.
 -/
 
-theorem q6_unique_vector_solution
-    {V K : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K)
-    (a : K) (ha : a ≠ 0) (u w : V) :
-    ∃! v : V, a • v + u = w := by
+theorem q6_matrix_vector_space (m n : ℕ) :
+    VectorSpaceAxioms (Matrix (Fin m) (Fin n) ℝ) ℝ := by
   sorry
 
 end Homework4
