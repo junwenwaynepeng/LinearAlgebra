@@ -1,5 +1,5 @@
-variable {V K : Type*}
-variable [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+import Mathlib
+import LinearAlgebra.CourseTools
 
 def IsVectorSubspace
     (V K : Type*)
@@ -28,7 +28,7 @@ theorem subspace_test
     (W : Set V)
     (has_zero : (0 : V) ∈ W)
     (add_close :
-      ∀ u v : V, u ∈ W → v ∈ W → u + v ∈ W)
+      ∀ (u : V) (v : V), u ∈ W ∧ v ∈ W → u + v ∈ W)
     (smul_close :
       ∀ (a : K) (v : V), v ∈ W → a • v ∈ W) :
     IsVectorSubspace V K W:= by
@@ -36,7 +36,7 @@ theorem subspace_test
   let addW : Add (↥W) :=
     ⟨fun u v =>
       ⟨(u : V) + (v : V),
-        add_close (u : V) (v : V) u.property v.property⟩⟩
+        add_close (u : V) (v : V) ⟨u.property, v.property⟩⟩⟩
 
   let zeroW : Zero (↥W) :=
     ⟨⟨0, has_zero⟩⟩
