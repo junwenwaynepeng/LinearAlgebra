@@ -363,6 +363,15 @@ lemma eq_neg_inv_smul_of_smul_add_eq_zero_V {V K : Type*}
   rw [smul_sum_V hV]
   simp only [hV.mul_smul]
 
+/-- Adding coefficient functions adds the resulting vectors. -/
+@[simp] lemma linearCombination_add_V {V K : Type*}
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms V K) (S : Finset V) (a b : S → K) :
+    LinearCombination hV S (fun u => a u + b u) =
+      LinearCombination hV S a + LinearCombination hV S b := by
+  unfold LinearCombination
+  simp only [hV.add_smul, Finset.sum_add_distrib]
+
 /-- If two vectors add to zero, either is the negative of the other. -/
 lemma eq_neg_of_add_eq_zero_V {V K : Type*}
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]

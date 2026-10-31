@@ -106,8 +106,47 @@ theorem linearly_independent_iff_unique_solution
   · intro hS
     by_contra!
     obtain ⟨u, hu, hu'⟩ := this
+    unfold ExistsUnique at hu'
     push Not at hu'
-
-
-  · intro huniuqe
-    hunique 0
+    obtain ⟨a, ha⟩ := IsLinearCombination.of_mem_span hV hu
+    obtain ⟨b, hb, hab⟩ := hu' a ha
+    let a_mins_b : S → K := fun (u : S) => a u - b u
+    have hzero : 0 = LinearCombination hV S a_mins_b :=by
+      calc
+        0 = (-1 : K) • u + u := (neg_one_smul_add_V hV u).symm
+        _ = u + (-1 : K) • u := (hV.add_comm ((-1 : K) • u) u)
+        _ = (LinearCombination hV S a) + (-1 : K) • u := by rw [ha]
+        _ = (LinearCombination hV S a) + (-1 : K) • (LinearCombination hV S b) := by rw [hb]
+        _ = (LinearCombination hV S a) + (LinearCombination hV S (fun v => (-1 : K) * b v)) :=by rw [(linearCombination_smul_V hV S b (-1 : K)).symm]
+        _ = (LinearCombination hV S (a + (fun v => (-1 : K) * b v))) := (linearCombination_add_V hV S a (fun v => (-1 : K) * b v)).symm
+        _ = LinearCombination hV S a_mins_b := by
+          congr 1
+          funext v
+          simp [a_mins_b]
+          ring
+    have ha_mins_b : a_mins_b ≠ 0 := by
+      intro h
+      have hab' : a = b := by
+        funext v
+        have hv : a v - b v = 0 := congrFun h v
+        exact sub_eq_zero.mp hv
+      exact hab hab'.symm
+    have hS' : IsLinearlyDependent hV S := by
+      unfold IsLinearlyDependent
+      unfold IsLinearlyIndependent
+      push Not
+      use a_mins_b
+      exact ⟨hzero.symm, ha_mins_b⟩
+    contradiction
+  · unfold IsLinearlyIndependent
+    intro hunique a ha
+    let zero : S → K := fun (u : S) => 0
+    have hzero : 0 = LinearCombination hV S zero := by
+      simp [LinearCombination, zero, zero_smul_V hV]
+    have hcomb : IsLinearCombination hV S (0 : V) :=
+      ⟨zero, hzero⟩
+    have h0 : (0 : V) ∈ Span hV S :=
+      hcomb.mem_span
+    have hazero : a = zero :=
+      (hunique 0 h0).unique ha.symm hzero
+    exact hazero
