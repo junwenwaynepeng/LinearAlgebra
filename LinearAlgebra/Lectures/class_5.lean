@@ -140,8 +140,8 @@ theorem span_is_subspace
     obtain ⟨S, a, hSX, ha⟩ := hu
     obtain ⟨T, b, hTX, hb⟩ := hv
     let U : Finset V := S ∪ T
-    let a' : U → K := extendCoefficients S U a
-    let b' : U → K := extendCoefficients T U b
+    let a' : U → K := fun u => if h : (u : V) ∈ S then a ⟨u , h⟩ else 0
+    let b' : U → K := fun u => if h : (u : V) ∈ T then b ⟨u , h⟩ else 0
     have ha' : LinearCombination hV U a' = LinearCombination hV S a :=
       sum_extendCoefficients_V hV S U a Finset.subset_union_left
     have hb' : LinearCombination hV U b' = LinearCombination hV T b :=

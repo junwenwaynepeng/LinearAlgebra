@@ -235,6 +235,16 @@ noncomputable def extendCoefficients {V K : Type*} [Zero K]
   classical
   exact fun v => if h : (v : V) ∈ S then a ⟨v, h⟩ else 0
 
+/-- Extending coefficients by zero to a larger finite set preserves nonzeroness. -/
+lemma extendCoefficients_ne_zero {V K : Type*} [Zero K]
+    {S T : Finset V} {a : S → K} (hST : S ⊆ T) (ha : a ≠ 0) :
+    extendCoefficients S T a ≠ 0 := by
+  classical
+  intro hzero
+  apply ha
+  funext v
+  simpa [extendCoefficients, v.property] using congrFun hzero ⟨v, hST v.property⟩
+
 /-- Adding zero coefficients on a larger finite set preserves the vector sum. -/
 lemma sum_extendCoefficients_V {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
