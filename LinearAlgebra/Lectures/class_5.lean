@@ -1,24 +1,57 @@
 import Mathlib
 import LinearAlgebra.CourseTools
+/-! Linear combinations and vector subspaces. -/
+
+open scoped BigOperators
+
+
+def LinearCombination
+    {V K : Type*}
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    (_ : VectorSpaceAxioms V K)
+    (S : Finset V)
+    (a : S → K) : V :=
+  ∑ v : S, a v • v
+
+def IsLinearCombination
+    {V K : Type*}
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms V K)
+    (S : Finset V) (b : V) : Prop :=
+  ∃ a : S → K, b = LinearCombination hV S a
+
+def Span
+    {V K : Type*}
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms V K) (X : Set V) : Set V :=
+  {w | ∃ (S : Finset V) (a : S → K), (∀ v ∈ S, v ∈ X) ∧ w = LinearCombination hV S a}
+
+
+/-
+↥ (\u-|): v : ↥W means v is a type V (above W), and v is in V
+
+↑ (\u-): ↑v means it original in W, but now treat it like in V
+-/
 
 def IsVectorSubspace
-    (V K : Type*)
+    {V K : Type*}
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
+    (_ : VectorSpaceAxioms V K)
     (W : Set V) : Prop :=
-  ∃ (addW : Add (↥W))
-    (zeroW : Zero (↥W))
-    (negW : Neg (↥W))
-    (smulW : SMul K (↥W)),
-    @VectorSpaceAxioms (↥W) K _
+  ∃ (addW : Add W)
+    (zeroW : Zero W)
+    (negW : Neg W)
+    (smulW : SMul K W),
+    @VectorSpaceAxioms W K _
       addW zeroW negW smulW ∧
-    (∀ u v : ↥W,
-      ((addW.add u v : ↥W) : V) =
+    (∀ u v : W,
+      ((addW.add u v : W) : V) =
         (u : V) + (v : V)) ∧
-    (((zeroW.zero : ↥W) : V) = (0 : V)) ∧
-    (∀ u : ↥W,
-      ((negW.neg u : ↥W) : V) = -(u : V)) ∧
-    (∀ (a : K) (u : ↥W),
-      ((smulW.smul a u : ↥W) : V) =
+    (((zeroW.zero : W) : V) = (0 : V)) ∧
+    (∀ u : W,
+      ((negW.neg u : W) : V) = -(u : V)) ∧
+    (∀ (a : K) (u : W),
+      ((smulW.smul a u : W) : V) =
         a • (u : V))
 
 theorem subspace_test
@@ -28,30 +61,28 @@ theorem subspace_test
     (W : Set V)
     (has_zero : (0 : V) ∈ W)
     (add_close :
-      ∀ (u : V) (v : V), u ∈ W ∧ v ∈ W → u + v ∈ W)
+      ∀ u v : V, u ∈ W → v ∈ W → u + v ∈ W)
     (smul_close :
       ∀ (a : K) (v : V), v ∈ W → a • v ∈ W) :
-    IsVectorSubspace V K W:= by
-
-  let addW : Add (↥W) :=
+    IsVectorSubspace hV W:= by
+  let addW : Add W :=
     ⟨fun u v =>
       ⟨(u : V) + (v : V),
-        add_close (u : V) (v : V) ⟨u.property, v.property⟩⟩⟩
-
-  let zeroW : Zero (↥W) :=
+        add_close (u : V) (v : V) u.property v.property⟩⟩
+  let zeroW : Zero W :=
     ⟨⟨0, has_zero⟩⟩
-
-  let smulKW : SMul K (↥W) :=
+  let smulKW : SMul K W :=
     ⟨fun a v =>
       ⟨a • (v : V),
         smul_close a (v : V) v.property⟩⟩
-
-  let negW : Neg (↥W) :=
+  let negW : Neg W :=
     ⟨fun v =>
       ⟨(-v : V), by
-        rw [←neg_one_smul_V K V hV (v : V)]
+        have hneg : (-1 : K) • (v : V) = -(v : V) :=
+          cancellation_law hV _ _ (v : V) (by
+            rw [neg_one_smul_V hV, hV.neg_add_cancel])
+        rw [← hneg]
         exact smul_close (-1 : K) (v : V) v.property⟩⟩
-
   have W_is_vector_space : VectorSpaceAxioms (↥W) K :={
       add_assoc := by
         intro u v w
@@ -86,7 +117,6 @@ theorem subspace_test
         apply Subtype.ext
         exact hV.add_smul a b u
     }
-
   refine ⟨addW, zeroW, negW, smulKW, W_is_vector_space, ?_, ?_, ?_, ?_ ⟩
   · intro u v
     rfl
@@ -95,6 +125,156 @@ theorem subspace_test
     rfl
   · intro a u
     rfl
+
+theorem span_is_subspace
+    {V K : Type*}
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms V K) (X : Set V) :
+    IsVectorSubspace hV (Span hV X) := by
+  classical
+  apply subspace_test hV (Span hV X)
+  · refine ⟨∅, (fun _ => 0), ?_, ?_⟩
+    · simp
+    · simp [LinearCombination]
+  · intro u v hu hv
+    obtain ⟨S, a, hSX, ha⟩ := hu
+    obtain ⟨T, b, hTX, hb⟩ := hv
+    let U : Finset V := S ∪ T
+    let a' : U → K := extendCoefficients S U a
+    let b' : U → K := extendCoefficients T U b
+    have ha' : LinearCombination hV U a' = LinearCombination hV S a :=
+      sum_extendCoefficients_V hV S U a Finset.subset_union_left
+    have hb' : LinearCombination hV U b' = LinearCombination hV T b :=
+      sum_extendCoefficients_V hV T U b Finset.subset_union_right
+    refine ⟨U, (fun s => a' s + b' s), ?_, ?_⟩
+    · intro w hw
+      rcases Finset.mem_union.mp hw with hS | hT
+      · exact hSX w hS
+      · exact hTX w hT
+    · rw [ha, hb, ← ha', ← hb']
+      simp only [LinearCombination, hV.add_smul, Finset.sum_add_distrib]
+  · intro c v hv
+    obtain ⟨S, a, hSX, ha⟩ := hv
+    refine ⟨S, (fun s => c * a s), hSX, ?_⟩
+    rw [ha]
+    unfold LinearCombination
+    rw [smul_sum_V hV]
+    simp only [hV.mul_smul]
+
+-- These examples use their own namespace so Class 5 compiles independently.
+namespace Class5Examples
+
+structure Vec3 where
+  x : ℝ
+  y : ℝ
+  z : ℝ
+
+abbrev V := Vec3
+
+-- Step 1: Define the operations and distinguished vectors.
+
+def vectorAdd (u v : Vec3) : Vec3 :=
+  ⟨u.x + v.x, u.y + v.y, u.z +v.z⟩
+
+def scalarMul (a : ℝ) (v : Vec3) : Vec3 :=
+  ⟨a * v.x, a * v.y, a * v.z⟩
+
+def zeroVector : Vec3 :=
+  ⟨0, 0, 0⟩
+
+def vectorNeg (v : Vec3) : Vec3 :=
+  ⟨-v.x, -v.y, -v.z⟩
+
+-- Step 2: Verify the vector space axioms.
+
+instance : Add Vec3 := ⟨vectorAdd⟩
+instance : Zero Vec3 := ⟨zeroVector⟩
+instance : Neg Vec3 := ⟨vectorNeg⟩
+instance : SMul ℝ Vec3 := ⟨scalarMul⟩
+
+theorem vector_add_eq (u v : V) :
+    u + v = vectorAdd u v := by
+  rfl
+
+theorem zero_vector : 0 = zeroVector := by
+  rfl
+
+theorem smul (a : ℝ) (v : V) : a•v = scalarMul a v :=by
+  rfl
+
+theorem neg_vector (v : V) : -v = vectorNeg v := by
+  rfl
+
+theorem V_is_vector_space : VectorSpaceAxioms V ℝ where
+  add_assoc := by
+    intro u v w
+    repeat rw [vector_add_eq]
+    unfold vectorAdd
+    simp?
+    refine ⟨?_,?_,?_⟩<;>ring
+
+  add_comm := by
+    intro u v
+    repeat rw [vector_add_eq]
+    unfold vectorAdd
+    simp?
+    refine ⟨?_,?_,?_⟩<;>ring
+
+  zero_add := by
+    intro v
+    rw [zero_vector, vector_add_eq]
+    unfold vectorAdd zeroVector
+    simp
+
+  neg_add_cancel := by
+    intro v
+    change vectorAdd (vectorNeg v) v = zeroVector
+    unfold vectorAdd vectorNeg zeroVector
+    simp
+
+  smul_add := by
+    intro a u v
+    change scalarMul a (vectorAdd u v) =
+      vectorAdd (scalarMul a u) (scalarMul a v)
+    unfold scalarMul vectorAdd
+    simp?
+    refine ⟨?_,?_,?_⟩<;>ring
+
+  add_smul := by
+    intro a b v
+    change scalarMul (a + b) v = vectorAdd (scalarMul a v) (scalarMul b v)
+    unfold scalarMul vectorAdd
+    simp?
+    refine ⟨?_,?_,?_⟩<;>ring
+
+  mul_smul := by
+    intro a b v
+    change scalarMul (a * b) v =
+      scalarMul a (scalarMul b v)
+    unfold scalarMul
+    simp?
+    refine ⟨?_,?_,?_⟩<;>ring
+
+  one_smul := by
+    intro v
+    change scalarMul 1 v = v
+    unfold scalarMul
+    simp
+
+theorem F_is_vector_space (X : Type*) :
+    VectorSpaceAxioms (X → ℝ) ℝ where
+  add_comm := add_comm
+  add_assoc := add_assoc
+  zero_add := zero_add
+  neg_add_cancel := neg_add_cancel
+  one_smul := one_smul ℝ
+  mul_smul := mul_smul
+  smul_add := smul_add
+  add_smul := add_smul
+
+end Class5Examples
+
+open Class5Examples
 
 /-- `y` is a twice-differentiable solution of
     y'' + 2y' - 3y = 0. -/
@@ -166,7 +346,7 @@ lemma ode_smul_mem
     linear_combination a * hyEq x
 
 theorem ode_solutions_are_subspace :
-    IsVectorSubspace (ℝ → ℝ) ℝ ODESolutions := by
+    IsVectorSubspace (F_is_vector_space ℝ) ODESolutions := by
   exact
     subspace_test
       (F_is_vector_space ℝ)
@@ -214,7 +394,7 @@ lemma homogeneous_smul_mem
   linear_combination a * hv
 
 theorem homogeneous_solutions_are_subspace :
-    IsVectorSubspace Vec3 ℝ homogeneousSolutions := by
+    IsVectorSubspace V_is_vector_space homogeneousSolutions := by
   exact
     subspace_test
       V_is_vector_space
@@ -222,323 +402,3 @@ theorem homogeneous_solutions_are_subspace :
       homogeneous_zero_mem
       homogeneous_add_mem
       homogeneous_smul_mem
-
-theorem intersection_is_subspace
-    {V K : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K)
-    (W₁ W₂ : Set V) (hW₁ : IsVectorSubspace V K W₁)(hW₂: IsVectorSubspace V K W₂) :
-    (IsVectorSubspace V K (W₁∩W₂)) := by
-  rcases hW₁ with ⟨addW₁, zeroW₁, negW₁, smulW₁, hax₁,
-      hadd₁, hzero₁, hneg₁, hsmul₁⟩
-  rcases hW₂ with ⟨addW₂, zeroW₂, negW₂, smulW₂, hax₂,
-      hadd₂, hzero₂, hneg₂, hsmul₂⟩
-  have hzero : (0 : V) ∈ W₁∩W₂ := by
-    constructor
-    · rw [←hzero₁]
-      exact Subtype.property (zeroW₁.zero : (↥W₁))
-    · rw [←hzero₂]
-      exact Subtype.property (zeroW₂.zero : (↥W₂))
-  have h_add_closed (u v : V) (hu : u ∈ W₁∩W₂) (hv : v ∈ W₁∩W₂) : u + v ∈ W₁∩W₂ := by
-    constructor
-    · let uW₁ : ↥W₁ := ⟨u, hu.1⟩
-      let vW₁ : ↥W₁ := ⟨v, hv.1⟩
-      have hmem : ((addW₁.add uW₁ vW₁ : ↥W₁) : V) ∈ W₁ :=
-        Subtype.property (addW₁.add uW₁ vW₁)
-      rwa [hadd₁ uW₁ vW₁] at hmem
-      --assumption
-    · let uW₂ : ↥W₂ := ⟨u, hu.2⟩
-      let vW₂ : ↥W₂ := ⟨v, hv.2⟩
-      have hmem : ((addW₂.add uW₂ vW₂ : ↥W₂) : V) ∈ W₂ :=
-        Subtype.property (addW₂.add uW₂ vW₂)
-      rwa [hadd₂ uW₂ vW₂] at hmem
-      --assumption
-  have h_smul_closed (a : K) (u : V) (hu : u ∈ W₁∩W₂) : a • u ∈ W₁∩W₂ := by
-    constructor
-    · let uW₁ : ↥W₁ := ⟨u, hu.1⟩
-      have hmem : ((smulW₁.smul a uW₁ : ↥W₁) : V) ∈ W₁ :=
-        Subtype.property (smulW₁.smul a uW₁)
-      rwa [hsmul₁ a uW₁] at hmem
-      --assumption
-    · let uW₂ : ↥W₂ := ⟨u, hu.2⟩
-      have hmem : ((smulW₂.smul a uW₂ : ↥W₂) : V) ∈ W₂ :=
-        Subtype.property (smulW₂.smul a uW₂)
-      rwa [hsmul₂ a uW₂] at hmem
-      --assumption
-  exact
-    subspace_test hV (W₁∩W₂) hzero h_add_closed h_smul_closed
-
-def listIntersection {V : Type*} :
-    List (Set V) → Set V
-  | [] => Set.univ
-  | W :: Ws => W ∩ listIntersection Ws
-
-theorem univ_is_subspace
-    {K V : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K) :
-    IsVectorSubspace V K (Set.univ : Set V) := by
-  apply subspace_test hV Set.univ
-  · simp
-  · intro u v hu hv
-    simp
-  · intro a v hv
-    simp
-
-lemma smul_zero_from_axioms
-    {V K : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K)
-    (a : K) :
-    a • (0 : V) = 0 := by
-
-  let x : V := a • (0 : V)
-
-  have hx : x + x = x := by
-    dsimp [x]
-    calc
-      a • (0 : V) + a • (0 : V)
-          = a • ((0 : V) + 0) :=
-            (hV.smul_add a 0 0).symm
-      _ = a • (0 : V) := by
-            rw [hV.zero_add]
-
-  change x = 0
-
-  calc
-    x = 0 + x := (hV.zero_add x).symm
-    _ = ((-x) + x) + x := by
-          rw [hV.neg_add_cancel x]
-    _ = (-x) + (x + x) :=
-          hV.add_assoc (-x) x x
-    _ = (-x) + x := by rw [hx]
-    _ = 0 := hV.neg_add_cancel x
-
-theorem zeroSubspace_is_subspace
-    {V K : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K) :
-    IsVectorSubspace V K ({0} : Set V) := by
-
-  apply subspace_test (V := V) (K := K) hV
-    ({0} : Set V)
-
-  · simp
-
-  · intro u v hu hv
-    simp only [Set.mem_singleton_iff] at hu hv ⊢
-    subst u
-    subst v
-    exact hV.zero_add 0
-
-  · intro a v hv
-    simp only [Set.mem_singleton_iff] at hv ⊢
-    subst v
-    exact smul_zero_from_axioms hV a
-
-theorem listIntersection_is_subspace
-    {K V : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K)
-    (Ws : List (Set V)) :
-    (∀ W ∈ Ws, IsVectorSubspace V K W) →
-      IsVectorSubspace V K (listIntersection Ws) := by
-
-  induction Ws with
-  | nil =>
-      intro hWs
-      exact univ_is_subspace hV
-
-  | cons W Ws ih =>
-      intro hWs
-
-      have hW : IsVectorSubspace V K W := by
-        apply hWs W
-        simp
-
-      have hTail :
-          IsVectorSubspace V K (listIntersection Ws) := by
-        apply ih
-        intro U hU
-        apply hWs U
-        simp [hU]
-
-      exact
-        intersection_is_subspace
-          hV
-          W
-          (listIntersection Ws)
-          hW
-          hTail
-lemma isVectorSubspace_zero_mem
-    {V K : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    {W : Set V}
-    (hW : IsVectorSubspace V K W) :
-    (0 : V) ∈ W := by
-
-  rcases hW with
-    ⟨addW, zeroW, negW, smulW,
-      hax, hadd, hzero, hneg, hsmul⟩
-
-  rw [← hzero]
-
-  exact Subtype.property (zeroW.zero : ↥W)
-lemma isVectorSubspace_add_mem
-    {V K : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    {W : Set V}
-    (hW : IsVectorSubspace V K W)
-    {u v : V}
-    (hu : u ∈ W)
-    (hv : v ∈ W) :
-    u + v ∈ W := by
-
-  rcases hW with
-    ⟨addW, zeroW, negW, smulW,
-      hax, hadd, hzero, hneg, hsmul⟩
-
-  let uW : ↥W := ⟨u, hu⟩
-  let vW : ↥W := ⟨v, hv⟩
-
-  have hmem :
-      ((addW.add uW vW : ↥W) : V) ∈ W :=
-    Subtype.property (addW.add uW vW)
-
-  rw [hadd uW vW] at hmem
-
-  exact hmem
-
-lemma isVectorSubspace_smul_mem
-    {V K : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    {W : Set V}
-    (hW : IsVectorSubspace V K W)
-    (a : K)
-    {v : V}
-    (hv : v ∈ W) :
-    a • v ∈ W := by
-
-  rcases hW with
-    ⟨addW, zeroW, negW, smulW,
-      hax, hadd, hzero, hneg, hsmul⟩
-
-  let vW : ↥W := ⟨v, hv⟩
-
-  have hmem :
-      ((smulW.smul a vW : ↥W) : V) ∈ W :=
-    Subtype.property (smulW.smul a vW)
-
-  rw [hsmul a vW] at hmem
-
-  exact hmem
-
-def subspaceSum
-    {V : Type*} [Add V]
-    (W₁ W₂ : Set V) : Set V :=
-  {x | ∃ u ∈ W₁, ∃ v ∈ W₂, x = u + v}
-
-theorem subspaceSum_is_subspace
-    {V K : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K)
-    (W₁ W₂ : Set V)
-    (hW₁ : IsVectorSubspace V K W₁)
-    (hW₂ : IsVectorSubspace V K W₂) :
-    IsVectorSubspace V K (subspaceSum W₁ W₂) := by
-
-  apply subspace_test (V := V) (K := K) hV
-    (subspaceSum W₁ W₂)
-
-  · -- 0 = 0 + 0
-    change ∃ u ∈ W₁, ∃ v ∈ W₂, (0 : V) = u + v
-
-    refine ⟨0, isVectorSubspace_zero_mem hW₁,
-      0, isVectorSubspace_zero_mem hW₂, ?_⟩
-
-    exact (hV.zero_add 0).symm
-
-  · -- Closure under addition
-    intro x y hx hy
-
-    change (∃ u ∈ W₁, ∃ v ∈ W₂, x = u + v) at hx
-    change (∃ u ∈ W₁, ∃ v ∈ W₂, y = u + v) at hy
-
-    rcases hx with ⟨u₁, hu₁, u₂, hu₂, rfl⟩
-    rcases hy with ⟨v₁, hv₁, v₂, hv₂, rfl⟩
-
-    change ∃ p ∈ W₁, ∃ q ∈ W₂,
-      (u₁ + u₂) + (v₁ + v₂) = p + q
-
-    refine ⟨u₁ + v₁,
-      isVectorSubspace_add_mem hW₁ hu₁ hv₁,
-      u₂ + v₂,
-      isVectorSubspace_add_mem hW₂ hu₂ hv₂,
-      ?_⟩
-
-    calc
-      (u₁ + u₂) + (v₁ + v₂)
-          = u₁ + (u₂ + (v₁ + v₂)) :=
-            hV.add_assoc u₁ u₂ (v₁ + v₂)
-      _ = u₁ + ((u₂ + v₁) + v₂) := by
-            rw [← hV.add_assoc u₂ v₁ v₂]
-      _ = u₁ + ((v₁ + u₂) + v₂) := by
-            rw [hV.add_comm u₂ v₁]
-      _ = u₁ + (v₁ + (u₂ + v₂)) := by
-            rw [hV.add_assoc v₁ u₂ v₂]
-      _ = (u₁ + v₁) + (u₂ + v₂) :=
-            (hV.add_assoc u₁ v₁ (u₂ + v₂)).symm
-
-  · -- Closure under scalar multiplication
-    intro a x hx
-
-    change (∃ u ∈ W₁, ∃ v ∈ W₂, x = u + v) at hx
-    rcases hx with ⟨u, hu, v, hv, rfl⟩
-
-    change ∃ p ∈ W₁, ∃ q ∈ W₂,
-      a • (u + v) = p + q
-
-    refine ⟨a • u,
-      isVectorSubspace_smul_mem hW₁ a hu,
-      a • v,
-      isVectorSubspace_smul_mem hW₂ a hv,
-      ?_⟩
-
-    exact hV.smul_add a u v
-
-def listSubspaceSum
-    {V : Type*} [Add V] [Zero V] :
-    List (Set V) → Set V
-  | [] => {0}
-  | W :: Ws => subspaceSum W (listSubspaceSum Ws)
-
-theorem listSubspaceSum_is_subspace
-    {V K : Type*}
-    [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K)
-    (Ws : List (Set V)) :
-    (∀ W ∈ Ws, IsVectorSubspace V K W) →
-      IsVectorSubspace V K (listSubspaceSum Ws) := by
-
-  induction Ws with
-  | nil =>
-      intro hWs
-      simpa [listSubspaceSum] using
-        (zeroSubspace_is_subspace (V := V) (K := K) hV)
-
-  | cons W Ws ih =>
-      intro hWs
-
-      have hW : IsVectorSubspace V K W := by
-        exact hWs W (by simp)
-
-      have hTail :
-          IsVectorSubspace V K (listSubspaceSum Ws) := by
-        apply ih
-        intro U hU
-        exact hWs U (by simp [hU])
-
-      simpa [listSubspaceSum] using
-        (subspaceSum_is_subspace
-          (V := V) (K := K)
-          hV W (listSubspaceSum Ws) hW hTail)

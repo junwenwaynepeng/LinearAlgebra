@@ -9,7 +9,7 @@ where
   add_comm : ∀ u v : V, u + v = v + u
   add_assoc : ∀ u v w : V, (u + v) + w = u + (v + w)
   zero_add : ∀ v : V, 0 + v = v
-  neg_add_cancel : ∀ v : V, ∃ u, u + v = 0
+  neg_add_cancel : ∀ v : V, -v + v = 0
 
   -- Scalar multiplication
   one_smul : ∀ v : V, (1 : K) • v = v
@@ -88,7 +88,6 @@ theorem V_is_vector_space : VectorSpaceAxioms V ℝ where
 
   neg_add_cancel := by
     intro v
-    use -v
     change vectorAdd (vectorNeg v) v = zeroVector
     unfold vectorAdd vectorNeg zeroVector
     simp
@@ -256,7 +255,6 @@ theorem P_is_vector_space : VectorSpaceAxioms P ℝ where
 
   neg_add_cancel := by
     intro v
-    use -v
     rw [poly_add]
     ext n
     rw [polyAdd_coeff]
@@ -355,14 +353,9 @@ theorem F_is_vector_space : VectorSpaceAxioms (F X) ℝ where
 
   neg_add_cancel := by
     intro v
-    use -v
     ext x
-    rw [fun_add]
-    unfold funAdd
-    rw [neg_fun]
-    unfold funNeg
-    simp
-    trivial
+    change -(v x) + v x = 0
+    exact neg_add_cancel (v x)
 
   smul_add := by
     intro a u v
@@ -406,14 +399,15 @@ lemma cancellation_law (V K : Type*)
     (u v w : V) :
     u + w = v + w → u = v := by
   intro eq
-  obtain ⟨neg_w, hnegw⟩ := hV.neg_add_cancel w
-  have hnegw : w + neg_w = 0 := by rw [hV.add_comm]; assumption
+  have hnegw : w + -w = 0 := by
+    rw [hV.add_comm]
+    exact hV.neg_add_cancel w
   calc
     u = u + 0 := (add_zero_V V K hV u).symm
-    _ = u + (w + neg_w) := by rw [hnegw]
-    _ = (u + w) + neg_w := (hV.add_assoc u w neg_w).symm
-    _ = (v + w) + neg_w := by rw [eq]
-    _ = v + (w + neg_w) := hV.add_assoc v w neg_w
+    _ = u + (w + -w) := by rw [hnegw]
+    _ = (u + w) + -w := (hV.add_assoc u w (-w)).symm
+    _ = (v + w) + -w := by rw [eq]
+    _ = v + (w + -w) := hV.add_assoc v w (-w)
     _ = v + 0 := by rw [hnegw]
     _ = v := add_zero_V V K hV v
 
@@ -421,18 +415,14 @@ lemma neg_unique_V (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K) (v : V) :
     ∃! u : V, u + v = 0  := by
-  obtain ⟨neg_v, hnegv⟩ := hV.neg_add_cancel v
-  refine ⟨neg_v, hnegv, ?_⟩
+  refine ⟨-v, hV.neg_add_cancel v, ?_⟩
   intro w hw
   calc
     w = 0 + w := (hV.zero_add w).symm
-    _ = (neg_v + v) + w := by rw [hnegv]
-    _ = neg_v + (v + w) := hV.add_assoc neg_v v w
-    _ = neg_v + 0 := by rw [hV.add_comm] at hw; rw[hw]
-    _ = neg_v := add_zero_V V K hV neg_v
-
-noncomputable def min_u (u : V) : V :=
-  Classical.choose (neg_unique_V V ℝ V_is_vector_space u).exists
+    _ = (-v + v) + w := by rw [hV.neg_add_cancel v]
+    _ = -v + (v + w) := hV.add_assoc (-v) v w
+    _ = -v + 0 := by rw [hV.add_comm] at hw; rw [hw]
+    _ = -v := add_zero_V V K hV (-v)
 
 lemma zero_unique_V (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
@@ -446,20 +436,16 @@ lemma zero_unique_V (V K : Type*)
     rw [hV.zero_add v]
   exact cancellation_law V K hV zero' 0 v hzu
 
-noncomputable def zero (u : V) : V :=
-  Classical.choose (zero_unique_V V ℝ V_is_vector_space u).exists
-
 lemma self_add_self_imp_eq_zero (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K) (v : V) (hv : v + v = v) :
     v = 0 := by
-  obtain ⟨u, hu⟩ := hV.neg_add_cancel v
   calc
     v = 0 + v := (hV.zero_add v).symm
-    _ = u + v + v := by rw [hu]
-    _ = u + (v + v) := (hV.add_assoc u v v)
-    _ = u + v := by rw [hv]
-    _ = 0 := by exact hu
+    _ = (-v + v) + v := by rw [← hV.neg_add_cancel v]
+    _ = -v + (v + v) := hV.add_assoc (-v) v v
+    _ = -v + v := by rw [hv]
+    _ = 0 := hV.neg_add_cancel v
 
 lemma zero_smul_V (V K : Type*)
     [Field K] [Add V] [Zero V] [Neg V] [SMul K V]
