@@ -20,7 +20,7 @@ def IsLinearlyDependent
   ¬ IsLinearlyIndependent hV S
 
 /-- A set containing a dependent set is dependent. -/
-lemma LinearlyDependentTrans
+lemma linearly_dependent_trans
     {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K)
@@ -31,14 +31,18 @@ lemma LinearlyDependentTrans
   push Not at *
   obtain ⟨a, hsum, ha⟩ := hdep
   -- Give the additional vectors coefficient zero.
-  let a' : S₂ → K := extendCoefficients S₁ S₂ a
+  let a' : S₂ → K :=
+    fun v => if h : (v : V) ∈ S₁ then a ⟨(v : V), h⟩ else 0
   have hsum' : LinearCombination hV S₂ a' = 0 := by
-    simpa [a', hS] using hsum
+    calc
+      LinearCombination hV S₂ a' = LinearCombination hV S₁ a :=
+        linearCombination_extendCoefficients hV S₁ S₂ a hS
+      _ = 0 := hsum
   have ha' : a' ≠ 0 := extendCoefficients_ne_zero hS ha
   exact ⟨a', hsum', ha'⟩
 
 /-- Every subset of an independent set is independent. -/
-lemma LinearlyIndependentSubset
+lemma linearly_independent_subset
     {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K)
@@ -46,10 +50,10 @@ lemma LinearlyIndependentSubset
     (hind : IsLinearlyIndependent hV S₂) :
     IsLinearlyIndependent hV S₁ := by
   contrapose hind
-  exact LinearlyDependentTrans hV S₁ S₂ hS hind
+  exact linearly_dependent_trans hV S₁ S₂ hS hind
 
 /-- Adding a vector outside the span preserves linear independence. -/
-lemma LinearlyIndependentAddVector
+lemma linearly_ind_add_vector
     {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K)
@@ -92,3 +96,18 @@ lemma LinearlyIndependentAddVector
         _ = LinearCombination hV S d := by
           simp only [hd, linearCombination_smul_V]
     exact hv hv'.mem_span
+
+theorem linearly_independent_iff_unique_solution
+    {V K : Type*}
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms V K) (S : Finset V):
+    IsLinearlyIndependent hV S ↔ ∀ u ∈ Span hV S, ∃! (a : S → K), u = LinearCombination hV S a := by
+  constructor
+  · intro hS
+    by_contra!
+    obtain ⟨u, hu, hu'⟩ := this
+    push Not at hu'
+
+
+  · intro huniuqe
+    hunique 0

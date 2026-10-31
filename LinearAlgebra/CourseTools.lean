@@ -424,6 +424,25 @@ lemma IsLinearCombination.mem_span {V K : Type*}
     _ = ∑ u : S.attach, a (u : S) • (u : V) :=
       (sum_attach_coe S (fun u : S => a u • (u : V))).symm
 
+/-- A vector in the span of a finite set can use that whole set as its coefficient domain. -/
+lemma IsLinearCombination.of_mem_span {V K : Type*}
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    (hV : VectorSpaceAxioms V K) {S : Finset V} {v : V}
+    (h : v ∈ Span hV (S : Set V)) : IsLinearCombination hV S v := by
+  classical
+  obtain ⟨T, b, hb⟩ := h
+  let a : S → K := fun s => if hs : s ∈ T then b ⟨s, hs⟩ else 0
+  have hTS : T ⊆ S.attach := by
+    intro s _
+    exact Finset.mem_attach S s
+  refine ⟨a, ?_⟩
+  calc
+    v = ∑ t : T, b t • (t : V) := hb
+    _ = ∑ s : S.attach, extendCoefficients T S.attach b s • (s : V) :=
+      (sum_extendCoefficients_smul hV T S.attach b hTS (fun s : S => (s : V))).symm
+    _ = LinearCombination hV S a :=
+      sum_attach_coe S (fun s : S => a s • (s : V))
+
 /-- Every generating vector belongs to its span. -/
 lemma mem_span_of_mem {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
