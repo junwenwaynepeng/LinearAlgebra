@@ -4,6 +4,8 @@ import LinearAlgebra.CourseTools
 
 open scoped BigOperators
 
+namespace Class5
+
 
 def LinearCombination
     {V K : Type*}
@@ -23,8 +25,9 @@ def IsLinearCombination
 def Span
     {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
-    (hV : VectorSpaceAxioms V K) (X : Set V) : Set V :=
-  {w | ∃ (S : Finset V) (a : S → K), (∀ v ∈ S, v ∈ X) ∧ w = LinearCombination hV S a}
+    (_ : VectorSpaceAxioms V K) (X : Set V) : Set V :=
+  {w | ∃ (S : Finset X) (a : S → K),
+    w = ∑ v : S, a v • (v : V)}
 
 
 /-
@@ -128,38 +131,34 @@ theorem subspace_test
 
 theorem span_is_subspace
     {V K : Type*}
-    [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V] [DecidableEq V]
     (hV : VectorSpaceAxioms V K) (X : Set V) :
     IsVectorSubspace hV (Span hV X) := by
-  classical
   apply subspace_test hV (Span hV X)
-  · refine ⟨∅, (fun _ => 0), ?_, ?_⟩
-    · simp
-    · simp [LinearCombination]
+  · refine ⟨∅, (fun _ => 0), ?_⟩
+    simp
   · intro u v hu hv
-    obtain ⟨S, a, hSX, ha⟩ := hu
-    obtain ⟨T, b, hTX, hb⟩ := hv
-    let U : Finset V := S ∪ T
-    let a' : U → K := fun u => if h : (u : V) ∈ S then a ⟨u , h⟩ else 0
-    let b' : U → K := fun u => if h : (u : V) ∈ T then b ⟨u , h⟩ else 0
-    have ha' : LinearCombination hV U a' = LinearCombination hV S a :=
-      sum_extendCoefficients_V hV S U a Finset.subset_union_left
-    have hb' : LinearCombination hV U b' = LinearCombination hV T b :=
-      sum_extendCoefficients_V hV T U b Finset.subset_union_right
-    refine ⟨U, (fun s => a' s + b' s), ?_, ?_⟩
-    · intro w hw
-      rcases Finset.mem_union.mp hw with hS | hT
-      · exact hSX w hS
-      · exact hTX w hT
-    · rw [ha, hb, ← ha', ← hb']
-      simp only [LinearCombination, hV.add_smul, Finset.sum_add_distrib]
+    obtain ⟨S, a, ha⟩ := hu
+    obtain ⟨T, b, hb⟩ := hv
+    let U : Finset X := S ∪ T
+    let a' : U → K := extendCoefficients S U a
+    let b' : U → K := extendCoefficients T U b
+    have ha' : (∑ s : U, a' s • (s : V)) = ∑ s : S, a s • (s : V) :=
+      sum_extendCoefficients_smul hV S U a Finset.subset_union_left
+        (fun x : X => (x : V))
+    have hb' : (∑ s : U, b' s • (s : V)) = ∑ s : T, b s • (s : V) :=
+      sum_extendCoefficients_smul hV T U b Finset.subset_union_right
+        (fun x : X => (x : V))
+    refine ⟨U, (fun s => a' s + b' s), ?_⟩
+    rw [ha, hb, ← ha', ← hb']
+    simp only [hV.add_smul, Finset.sum_add_distrib]
   · intro c v hv
-    obtain ⟨S, a, hSX, ha⟩ := hv
-    refine ⟨S, (fun s => c * a s), hSX, ?_⟩
-    rw [ha]
-    unfold LinearCombination
-    rw [smul_sum_V hV]
+    obtain ⟨S, a, ha⟩ := hv
+    refine ⟨S, (fun s => c * a s), ?_⟩
+    rw [ha, smul_sum_V hV]
     simp only [hV.mul_smul]
+
+end Class5
 
 -- These examples use their own namespace so Class 5 compiles independently.
 namespace Class5Examples
