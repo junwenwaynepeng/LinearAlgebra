@@ -230,16 +230,14 @@ lemma smul_sum_V {V K ι : Type*}
       rw [Finset.sum_insert hi, Finset.sum_insert hi, hV.smul_add, ih]
 
 /-- Extend coefficients from one finite set to another, using zero outside the source. -/
-noncomputable def extendCoefficients {V K : Type*} [Zero K]
-    (S T : Finset V) (a : S → K) : T → K := by
-  classical
-  exact fun v => if h : (v : V) ∈ S then a ⟨v, h⟩ else 0
+def extendCoefficients {V K : Type*} [Zero K] [DecidableEq V]
+    (S T : Finset V) (a : S → K) : T → K :=
+  fun v => if h : (v : V) ∈ S then a ⟨v, h⟩ else 0
 
 /-- Extending coefficients by zero to a larger finite set preserves nonzeroness. -/
-lemma extendCoefficients_ne_zero {V K : Type*} [Zero K]
+lemma extendCoefficients_ne_zero {V K : Type*} [Zero K] [DecidableEq V]
     {S T : Finset V} {a : S → K} (hST : S ⊆ T) (ha : a ≠ 0) :
     extendCoefficients S T a ≠ 0 := by
-  classical
   intro hzero
   apply ha
   funext v
@@ -248,11 +246,11 @@ lemma extendCoefficients_ne_zero {V K : Type*} [Zero K]
 /-- Adding zero coefficients on a larger finite set preserves the vector sum. -/
 lemma sum_extendCoefficients_V {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    [DecidableEq V]
     (hV : VectorSpaceAxioms V K)
     (S T : Finset V) (a : S → K) (hST : S ⊆ T) :
     (∑ v : T, extendCoefficients S T a v • (v : V)) =
       ∑ v : S, a v • (v : V) := by
-  classical
   let a₀ : V → K := fun v => if h : v ∈ S then a ⟨v, h⟩ else 0
   change (∑ v : T, a₀ (v : V) • (v : V)) = _
   calc
