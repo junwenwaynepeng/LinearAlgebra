@@ -295,6 +295,41 @@ lemma sum_attach_coe {ι M : Type*} [AddCommMonoid M]
       Finset.sum_coe_sort S.attach f
     _ = ∑ i : S, f i := (Finset.sum_coe_sort_eq_attach S f).symm
 
+/-- Split a sum over a finite subtype into one term and the sum over the remaining elements. -/
+lemma sum_sdiff_singleton {ι M : Type*} [AddCommMonoid M] [DecidableEq ι]
+    (S : Finset ι) (v : ι) (hv : v ∈ S) (f : S → M) :
+    (∑ u : S, f u) = f ⟨v, hv⟩ +
+      ∑ u : ↥(S \ {v}), f ⟨(u : ι), (Finset.mem_sdiff.mp u.property).1⟩ := by
+  let F : ι → M := fun u => if hu : u ∈ S then f ⟨u, hu⟩ else 0
+  calc
+    (∑ u : S, f u) = ∑ u : S, F u := by
+      apply Finset.sum_congr rfl
+      intro u _
+      simp only [F, dite_eq_left u.property]
+    _ = ∑ u ∈ S, F u := Finset.sum_coe_sort S F
+    _ = F v + ∑ u ∈ S \ {v}, F u := by
+      rw [Finset.sdiff_singleton_eq_erase]
+      exact (Finset.add_sum_erase S F hv).symm
+    _ = F v + ∑ u : ↥(S \ {v}), F u := by
+      rw [Finset.sum_coe_sort]
+    _ = f ⟨v, hv⟩ +
+        ∑ u : ↥(S \ {v}), f ⟨(u : ι), (Finset.mem_sdiff.mp u.property).1⟩ := by
+      rw [show F v = f ⟨v, hv⟩ by simp only [F, dite_eq_left hv]]
+      congr 1
+      apply Finset.sum_congr rfl
+      intro u _
+      simp only [F, dite_eq_left (Finset.mem_sdiff.mp u.property).1]
+
+/-- Split off the term of an existing vector, leaving the combination over `S \ {v}`. -/
+lemma linearCombination_sdiff_singleton_V {V K : Type*}
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V] [DecidableEq V]
+    (hV : VectorSpaceAxioms V K)
+    (S : Finset V) (v : V) (hv : v ∈ S) (a : S → K) :
+    LinearCombination hV S a = a ⟨v, hv⟩ • v +
+      LinearCombination hV (S \ {v})
+        (fun u => a ⟨(u : V), (Finset.mem_sdiff.mp u.property).1⟩) := by
+  exact sum_sdiff_singleton S v hv (fun u => a u • (u : V))
+
 /-- Split off the coefficient of a newly inserted vector. -/
 lemma linearCombination_insert_V {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V] [DecidableEq V]
@@ -416,9 +451,9 @@ def IsLinearCombination
 def Span
     {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
-    (_ : VectorSpaceAxioms V K) (X : Set V) : Set V :=
-  {w | ∃ (S : Finset X) (a : S → K),
-    w = ∑ v : S, a v • (v : V)}
+    (hV : VectorSpaceAxioms V K) (X : Set V) : Set V :=
+  {w | ∃ (S : Finset V), (S : Set V) ⊆ X ∧
+    ∃ (a : S → K), w = LinearCombination hV S a}
 
 
 /-- A linear combination of a finite set belongs to the span of that set. -/
@@ -427,11 +462,7 @@ lemma IsLinearCombination.mem_span {V K : Type*}
     {hV : VectorSpaceAxioms V K} {S : Finset V} {v : V}
     (h : IsLinearCombination hV S v) : v ∈ Span hV (S : Set V) := by
   obtain ⟨a, ha⟩ := h
-  refine ⟨S.attach, (fun u => a (u : S)), ?_⟩
-  calc
-    v = ∑ u : S, a u • (u : V) := ha
-    _ = ∑ u : S.attach, a (u : S) • (u : V) :=
-      (sum_attach_coe S (fun u : S => a u • (u : V))).symm
+  exact ⟨S, Set.Subset.rfl, a, ha⟩
 
 /-- A vector in the span of a finite set can use that whole set as its coefficient domain. -/
 lemma IsLinearCombination.of_mem_span {V K : Type*}
@@ -439,27 +470,22 @@ lemma IsLinearCombination.of_mem_span {V K : Type*}
     (hV : VectorSpaceAxioms V K) {S : Finset V} {v : V}
     (h : v ∈ Span hV (S : Set V)) : IsLinearCombination hV S v := by
   classical
-  obtain ⟨T, b, hb⟩ := h
-  let a : S → K := fun s => if hs : s ∈ T then b ⟨s, hs⟩ else 0
-  have hTS : T ⊆ S.attach := by
-    intro s _
-    exact Finset.mem_attach S s
-  refine ⟨a, ?_⟩
+  obtain ⟨T, hTS, b, hb⟩ := h
+  refine ⟨extendCoefficients T S b, ?_⟩
   calc
-    v = ∑ t : T, b t • (t : V) := hb
-    _ = ∑ s : S.attach, extendCoefficients T S.attach b s • (s : V) :=
-      (sum_extendCoefficients_smul hV T S.attach b hTS (fun s : S => (s : V))).symm
-    _ = LinearCombination hV S a :=
-      sum_attach_coe S (fun s : S => a s • (s : V))
+    v = LinearCombination hV T b := hb
+    _ = LinearCombination hV S (extendCoefficients T S b) :=
+      (linearCombination_extendCoefficients hV T S b hTS).symm
 
 /-- Every generating vector belongs to its span. -/
 lemma mem_span_of_mem {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
     (hV : VectorSpaceAxioms V K) {X : Set V} {v : V} (hv : v ∈ X) :
     v ∈ Span hV X := by
-  refine ⟨{⟨v, hv⟩}, (fun _ => 1), ?_⟩
-  simp only [hV.one_smul]
-  simp
+  classical
+  refine ⟨{v}, ?_, (fun _ => 1), ?_⟩
+  · simpa using hv
+  · simp [LinearCombination, hV.one_smul]
 
 
 /-
@@ -568,25 +594,35 @@ theorem span_is_subspace
     (hV : VectorSpaceAxioms V K) (X : Set V) :
     IsVectorSubspace hV (Span hV X) := by
   apply subspace_test hV (Span hV X)
-  · refine ⟨∅, (fun _ => 0), ?_⟩
-    simp
+  · refine ⟨∅, ?_, (fun _ => 0), ?_⟩
+    · simp
+    · simp [LinearCombination]
   · intro u v hu hv
-    obtain ⟨S, a, ha⟩ := hu
-    obtain ⟨T, b, hb⟩ := hv
-    let U : Finset X := S ∪ T
+    obtain ⟨S, hS, a, ha⟩ := hu
+    obtain ⟨T, hT, b, hb⟩ := hv
+    let U : Finset V := S ∪ T
     let a' : U → K := extendCoefficients S U a
     let b' : U → K := extendCoefficients T U b
-    have ha' : (∑ s : U, a' s • (s : V)) = ∑ s : S, a s • (s : V) :=
-      sum_extendCoefficients_smul hV S U a Finset.subset_union_left
-        (fun x : X => (x : V))
-    have hb' : (∑ s : U, b' s • (s : V)) = ∑ s : T, b s • (s : V) :=
-      sum_extendCoefficients_smul hV T U b Finset.subset_union_right
-        (fun x : X => (x : V))
-    refine ⟨U, (fun s => a' s + b' s), ?_⟩
-    rw [ha, hb, ← ha', ← hb']
-    simp only [hV.add_smul, Finset.sum_add_distrib]
+    have ha' : LinearCombination hV U a' = LinearCombination hV S a :=
+      linearCombination_extendCoefficients hV S U a Finset.subset_union_left
+    have hb' : LinearCombination hV U b' = LinearCombination hV T b :=
+      linearCombination_extendCoefficients hV T U b Finset.subset_union_right
+    refine ⟨U, ?_, (fun s => a' s + b' s), ?_⟩
+    · intro w hw
+      rcases Finset.mem_union.mp hw with hwS | hwT
+      · exact hS hwS
+      · exact hT hwT
+    · calc
+        u + v = LinearCombination hV S a + LinearCombination hV T b := by
+          rw [ha, hb]
+        _ = LinearCombination hV U a' + LinearCombination hV U b' := by
+          rw [ha', hb']
+        _ = LinearCombination hV U (fun s => a' s + b' s) :=
+          (linearCombination_add_V hV U a' b').symm
   · intro c v hv
-    obtain ⟨S, a, ha⟩ := hv
-    refine ⟨S, (fun s => c * a s), ?_⟩
-    rw [ha, smul_sum_V hV]
-    simp only [hV.mul_smul]
+    obtain ⟨S, hS, a, ha⟩ := hv
+    refine ⟨S, hS, (fun s => c * a s), ?_⟩
+    calc
+      c • v = c • LinearCombination hV S a := by rw [ha]
+      _ = LinearCombination hV S (fun s => c * a s) :=
+        (linearCombination_smul_V hV S a c).symm

@@ -143,10 +143,8 @@ theorem linearly_independent_iff_unique_solution
     let zero : S → K := fun (u : S) => 0
     have hzero : 0 = LinearCombination hV S zero := by
       simp [LinearCombination, zero, zero_smul_V hV]
-    have hcomb : IsLinearCombination hV S (0 : V) :=
-      ⟨zero, hzero⟩
-    have h0 : (0 : V) ∈ Span hV S :=
-      hcomb.mem_span
+    have h0 : (0 : V) ∈ Span hV (S : Set V) :=
+      ⟨S, Set.Subset.rfl, zero, hzero⟩
     have hazero : a = zero :=
       (hunique 0 h0).unique ha.symm hzero
     exact hazero
