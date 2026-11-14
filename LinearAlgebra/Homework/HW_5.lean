@@ -43,6 +43,10 @@ Usage:
 Here hadd u v hu hv proves u + v ∈ W, and
 hsmul a v hv proves a • v ∈ W.
 To prove a new set is a subspace, use the course theorem subspace_test.
+
+CourseTools also supplies subspace_sum_mem: a finite sum belongs to a
+subspace when every summand belongs to it. Its proof is provided; in
+Question 6, justify membership of each summand before applying it.
 -/
 
 theorem function_space_axioms (X : Type*) :
@@ -256,20 +260,23 @@ For statement 1, construct a singleton finite set and its coefficients
 directly from the definition of Span. Do not cite mem_span_of_mem.
 For statement 2, you may use span_is_subspace from Class 5.
 For statement 3, obtain a finite linear combination representing a vector
-in Span hV X, and prove that its sum belongs to W using finite induction.
+in Span hV X. Show that each scalar multiple belongs to W, then use the
+supplied finite-sum closure theorem subspace_sum_mem from CourseTools.
 
-Hint: subspace_properties gives the starting and closure facts for W.
-Prove that every term belongs to W, then that each finite partial sum
-belongs to W. Finset.induction_on handles the empty set and insert steps;
-Finset.sum_empty and Finset.sum_insert describe the corresponding sums.
+Hint: subspace_properties gives the scalar-multiplication closure fact for W.
+The supplied theorem subspace_sum_mem hW I f hf proves
+  (∑ i ∈ I, f i) ∈ W
+when hf proves ∀ i ∈ I, f i ∈ W. This includes the empty sum.
 The definition LinearCombination hV S a is ∑ t : S, a t • (t : V).
+For this sum, take I = Finset.univ on the index type S. An index t : S
+carries the fact t.property : (t : V) ∈ S; use it to show (t : V) ∈ X,
+then (t : V) ∈ W, and finally a t • (t : V) ∈ W.
 
 The set X may be empty or infinite. Do not assume that X itself is a Finset.
 Use the course definition Span, not Submodule.span.
 
 References:
-- LinearAlgebra/Lectures/Class_2.lean, existential witnesses, induction,
-  and finite sums.
+- LinearAlgebra/Lectures/Class_2.lean, existential witnesses and finite sums.
 - LinearAlgebra/Lectures/Class_5.lean, Span, LinearCombination,
   IsVectorSubspace, and span_is_subspace.
 -/

@@ -588,6 +588,25 @@ theorem subspace_test
   · intro a u
     rfl
 
+/-- A finite sum of vectors in a subspace belongs to that subspace, including the empty sum. -/
+theorem subspace_sum_mem
+    {ι V K : Type*}
+    [Field K] [AddCommMonoid V] [Neg V] [SMul K V]
+    {hV : VectorSpaceAxioms V K} {W : Set V}
+    (hW : IsVectorSubspace hV W)
+    (I : Finset ι) (f : ι → V)
+    (hf : ∀ i ∈ I, f i ∈ W) :
+    (∑ i ∈ I, f i) ∈ W := by
+  obtain ⟨addW, zeroW, _, _, _, hadd, hzero, _, _⟩ := hW
+  have zero_mem : (0 : V) ∈ W := by
+    rw [← hzero]
+    exact zeroW.zero.property
+  have add_mem : ∀ u v : V, u ∈ W → v ∈ W → u + v ∈ W := by
+    intro u v hu hv
+    rw [← hadd ⟨u, hu⟩ ⟨v, hv⟩]
+    exact (addW.add ⟨u, hu⟩ ⟨v, hv⟩).property
+  exact Finset.sum_induction f (fun v => v ∈ W) add_mem zero_mem hf
+
 theorem span_is_subspace
     {V K : Type*}
     [Field K] [AddCommMonoid V] [Neg V] [SMul K V] [DecidableEq V]
